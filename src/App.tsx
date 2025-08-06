@@ -4,6 +4,8 @@ import "./App.css";
 import type { BTreeConfig } from "./types";
 
 import { indexConfig } from "./data/idTitle";
+//import { indexConfig } from "./data/idTitleBackup";
+import { indexConfig as _old } from "./data/idIncludeTitle";
 
 // B+ Tree data structures
 interface BTreeLeafNode {
@@ -88,6 +90,17 @@ const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {
         } else {
           // For internal nodes, use the first key
           keys.push(children[j].keys[0]);
+        }
+      }
+
+      // If we have only one child, this internal node shouldn't exist
+      // But if it does (due to tree structure), we need at least one key for display
+      if (keys.length === 0 && children.length === 1) {
+        // Use the first key from the single child as a representative key
+        if (children[0].type === "leaf") {
+          keys.push(children[0].keys[0]);
+        } else {
+          keys.push(children[0].keys[0] || []);
         }
       }
 
