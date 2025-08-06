@@ -1,27 +1,11 @@
 import type { BTreeConfig, BTreeInternalNode, BTreeLeafNode, BTreeNode } from "../types";
 import { BTREE_CONFIG } from "./btreeSettings";
+import sortBy from "lodash.sortby";
 
 export const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {
   // Sort records by all key columns in order
-  const sortedRecords = [...indexConfig.data].sort((a, b) => {
-    for (const keyColumn of indexConfig.keyColumns) {
-      const aVal = a[keyColumn];
-      const bVal = b[keyColumn];
 
-      // Handle different data types
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        const comparison = aVal.localeCompare(bVal);
-        if (comparison !== 0) return comparison;
-      } else if (typeof aVal === "number" && typeof bVal === "number") {
-        if (aVal !== bVal) return aVal - bVal;
-      } else {
-        // Fallback to string comparison
-        const comparison = String(aVal).localeCompare(String(bVal));
-        if (comparison !== 0) return comparison;
-      }
-    }
-    return 0;
-  });
+  const sortedRecords = sortBy([...indexConfig.data], indexConfig.keyColumns);
 
   // Create leaf nodes
   const leaves: BTreeLeafNode[] = [];
