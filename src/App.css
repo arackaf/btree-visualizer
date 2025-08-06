@@ -93,6 +93,28 @@ svg {
   fill: #333;
 }
 
+/* Heap styles */
+.heap ellipse {
+  fill: #f5f5f5;
+  stroke: #999;
+  stroke-width: 2;
+}
+
+.heap text {
+  fill: #666;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.heap-arrows path {
+  stroke: #666;
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.heap-arrows polygon {
+  fill: #666;
+}
+
 /* Responsive design */
 @media (max-width: 1400px) {
   svg {
