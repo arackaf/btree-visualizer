@@ -3,9 +3,10 @@ import * as d3 from "d3";
 import "./App.css";
 import type { BTreeNode } from "./types";
 
-import { indexConfig } from "./data/idTitle";
+import { indexConfig } from "./data/idIncludeTitle";
+// import { indexConfig } from "./data/idTitle";
 //import { indexConfig } from "./data/idTitleBackup";
-import { indexConfig as _old } from "./data/idIncludeTitle";
+// import { indexConfig as _old } from "./data/idIncludeTitle";
 import { BTREE_CONFIG } from "./util/btreeSettings";
 import { createBTreeFromData } from "./util/createBTree";
 
@@ -259,7 +260,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
           });
         } else {
           // Display keys horizontally for numbers
-          const keyTexts = node.data.keys.map((key: any) => (Array.isArray(key) ? `[${key.join(", ")}]` : key));
+          const keyTexts = node.data.keys.map((key: any) => (Array.isArray(key) && key.length > 1 ? `[${key.join(", ")}]` : key));
           nodeGroup
             .append("text")
             .attr("x", nodeWidth / 2)
