@@ -175,49 +175,55 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       node.y = y;
 
       if (node.children && node.children.length > 0) {
-        // Special handling for leaf nodes - use much tighter spacing
-        const isLeafParent = node.children.every((child: any) => !child.children || child.children.length === 0);
-
-        if (isLeafParent) {
-          // For leaf nodes, use minimal spacing
-          const leafSpacing = 160; // Much smaller spacing between leaves
-          const totalLeafWidth = (node.children.length - 1) * leafSpacing;
-          const startX = centerX - totalLeafWidth / 2;
-
-          node.children.forEach((child: any, i: number) => {
-            const childX = startX + i * leafSpacing;
-            positionNodes(child, childX - 50, childX + 50, y + levelHeight);
+        // Universal approach: collect all leaf descendants and space them evenly
+        const collectLeaves = (n: any): any[] => {
+          if (!n.children || n.children.length === 0) {
+            return [n];
+          }
+          let leaves: any[] = [];
+          n.children.forEach((child: any) => {
+            leaves = leaves.concat(collectLeaves(child));
           });
-        } else {
-          // For internal nodes, calculate proportional spacing
-          const calculateSubtreeLeaves = (n: any): number => {
-            if (!n.children || n.children.length === 0) return 1;
-            return n.children.reduce((sum: number, child: any) => sum + calculateSubtreeLeaves(child), 0);
-          };
+          return leaves;
+        };
 
-          const childLeafCounts = node.children.map((child: any) => calculateSubtreeLeaves(child));
-          const totalLeaves = childLeafCounts.reduce((sum: number, count: number) => sum + count, 0);
+        const allLeaves = collectLeaves(node);
+        const leafSpacing = 160; // Consistent spacing for ALL leaves
+        const totalWidth = (allLeaves.length - 1) * leafSpacing;
+        const startX = node.x - totalWidth / 2;
 
-          // Distribute based on leaf count but with some minimum spacing
-          const availableWidth = rightBound - leftBound;
-          let currentX = leftBound;
+        // Position all leaves with consistent spacing
+        allLeaves.forEach((leaf: any, i: number) => {
+          leaf.x = startX + i * leafSpacing;
+          leaf.y = y + levelHeight * (4 - 1); // All leaves go to the bottom level
+        });
 
-          node.children.forEach((child: any, i: number) => {
-            const childProportion = childLeafCounts[i] / totalLeaves;
-            const childWidth = Math.max(200, availableWidth * childProportion); // Minimum width
-            const childLeft = currentX;
-            const childRight = currentX + childWidth;
+        // Now position internal nodes above their leaf ranges
+        const positionInternalNodes = (n: any, currentLevel: number): void => {
+          if (!n.children || n.children.length === 0) return; // Skip leaves
 
-            positionNodes(child, childLeft, childRight, y + levelHeight);
-            currentX = childRight;
+          // Find the range of leaves under this node
+          const leavesUnder = collectLeaves(n);
+          const leftmostLeaf = leavesUnder[0];
+          const rightmostLeaf = leavesUnder[leavesUnder.length - 1];
+
+          // Position this internal node centered over its leaves
+          n.x = (leftmostLeaf.x + rightmostLeaf.x) / 2;
+          n.y = y + levelHeight * currentLevel;
+
+          // Position child internal nodes
+          n.children.forEach((child: any) => {
+            positionInternalNodes(child, currentLevel + 1);
           });
-        }
+        };
+
+        // Position all internal nodes starting from level 0
+        positionInternalNodes(node, 0);
       }
     };
 
-    // Start positioning from the full width
-    const padding = 100;
-    positionNodes(hierarchyRoot, padding, width - padding, 80);
+    // Start positioning - let the algorithm determine its own width
+    positionNodes(hierarchyRoot, 0, width, 80);
 
     // Collect all nodes for rendering
     const allNodes: any[] = [];
