@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import "./App.css";
-import type { BTreeNode } from "./types";
+import type { BTreeNode, BTreeRootNode, BTreeRootNodePositioned } from "./types";
 
 import { indexConfig } from "./data/idIncludeTitle";
 // import { indexConfig } from "./data/idTitle";
@@ -10,6 +10,11 @@ import { BTREE_CONFIG } from "./util/btreeSettings";
 import { createBTreeFromData } from "./util/createBTree";
 
 const SHOW_HEAP = true;
+const LEVEL_HEIGHT = 140;
+const PADDING = 200;
+const NODE_WIDTH = 120;
+const NODE_HEIGHT = 60;
+const LEFT_SPACING = 160;
 
 type HeapVisualizationProps = {
   x: number;
@@ -22,6 +27,18 @@ type HeapVisualizationProps = {
     data: BTreeNode;
   }>;
   nodeHeight: number;
+};
+
+// Universal approach: collect all leaf descendants and space them evenly
+const collectLeaves = (n: BTreeRootNode): BTreeRootNode[] => {
+  if (!n.children || n.children.length === 0) {
+    return [n];
+  }
+  let leaves: BTreeRootNode[] = [];
+  n.children.forEach((child: BTreeRootNode) => {
+    leaves = leaves.concat(collectLeaves(child));
+  });
+  return leaves;
 };
 
 const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, width, height, leafNodes, nodeHeight }) => {
@@ -114,7 +131,6 @@ interface VisualNode {
   x: number;
   y: number;
   data: BTreeNode;
-  level: number;
 }
 
 interface VisualLink {
@@ -133,11 +149,12 @@ interface LeafArrow {
 }
 
 // Create hierarchy data
-const createHierarchy = (node: BTreeNode, level: number = 0): any => {
+const createHierarchy = (node: BTreeNode): BTreeRootNode => {
   const hierarchyNode = {
-    data: node,
-    level,
-    children: node.type === "internal" ? node.children.map((child) => createHierarchy(child, level + 1)) : [],
+    x: 0,
+    y: 0,
+    node,
+    children: node.type === "internal" ? node.children.map((child) => createHierarchy(child)) : [],
   };
   return hierarchyNode;
 };
@@ -145,9 +162,30 @@ const createHierarchy = (node: BTreeNode, level: number = 0): any => {
 // Calculate the actual tree depth
 const calculateTreeDepth = (node: any): number => {
   if (!node.children || node.children.length === 0) {
-    return 1; // Leaf level
+    return 1; // Leaf
   }
   return 1 + Math.max(...node.children.map((child: any) => calculateTreeDepth(child)));
+};
+
+// Now position internal nodes above their leaf ranges
+const positionInternalNodes = (node: BTreeRootNode, currentLevel: number, initialYOffset: number): void => {
+  if (!node.children || node.children.length === 0) return; // Skip leaves
+
+  // Find the range of leaves under this node
+  const leavesUnder = collectLeaves(node);
+  const leftmostLeaf = leavesUnder[0];
+  const rightmostLeaf = leavesUnder[leavesUnder.length - 1];
+
+  // Position this internal node centered over its leaves, but ensure it doesn't go beyond left padding
+  const centeredX = (leftmostLeaf.x + rightmostLeaf.x) / 2;
+  const minX = PADDING + NODE_WIDTH / 2; // Ensure node doesn't extend beyond left padding
+  node.x = Math.max(minX, centeredX);
+  node.y = initialYOffset + LEVEL_HEIGHT * currentLevel;
+
+  // Position child internal nodes
+  node.children.forEach((child: any) => {
+    positionInternalNodes(child, currentLevel + 1, initialYOffset);
+  });
 };
 
 const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
@@ -156,80 +194,52 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
   const [leafArrows, setLeafArrows] = React.useState<LeafArrow[]>([]);
   const [heapProps, setHeapProps] = React.useState<HeapVisualizationProps | null>();
 
-  const nodeWidth = 120;
-  const nodeHeight = 60;
-  const levelHeight = 140;
-  const leafSpacing = 160;
-
   // Calculate required width based on actual data
   const totalLeaves = Math.ceil(indexConfig.data.length / BTREE_CONFIG.maxKeysPerLeaf);
-  const treeWidth = (totalLeaves - 1) * leafSpacing + nodeWidth;
-  const padding = 200;
+  const treeWidth = (totalLeaves - 1) * LEFT_SPACING + NODE_WIDTH;
 
   const hierarchyRoot = useMemo(() => createHierarchy(tree), [tree]);
   const treeDepth = useMemo(() => calculateTreeDepth(hierarchyRoot), [hierarchyRoot]);
 
-  const width = treeWidth + padding * 2;
+  const width = treeWidth + PADDING * 2;
   const heapHeight = 120;
 
   const baseTreeHeight = 80; // Top padding
 
-  const dynamicTreeHeight = baseTreeHeight + (treeDepth - 1) * levelHeight + nodeHeight + 40; // Bottom padding
+  const dynamicTreeHeight = baseTreeHeight + (treeDepth - 1) * LEVEL_HEIGHT + NODE_HEIGHT + 40; // Bottom padding
   const height = SHOW_HEAP ? dynamicTreeHeight + heapHeight + 60 : dynamicTreeHeight;
+
+  const createPositionedNodeHierarchy = (node: BTreeRootNode, x: number, y: number): BTreeRootNodePositioned => {
+    return {
+      ...node,
+      x,
+      y,
+      children: node.children?.map((child) => createPositionedNodeHierarchy(child)) ?? [],
+    };
+  };
 
   useEffect(() => {
     // Calculate positions for nodes with tighter leaf spacing
-    const positionNodes = (node: any, leftBound: number, rightBound: number, y: number): void => {
+    const positionNodes = (node: BTreeRootNode, leftBound: number, rightBound: number, y: number): BTreeRootNodePositioned => {
       const centerX = (leftBound + rightBound) / 2;
-      node.x = centerX;
-      node.y = y;
+
+      const result: BTreeRootNodePositioned = createPositionedNodeHierarchy(node, centerX, y);
 
       if (node.children && node.children.length > 0) {
-        // Universal approach: collect all leaf descendants and space them evenly
-        const collectLeaves = (n: any): any[] => {
-          if (!n.children || n.children.length === 0) {
-            return [n];
-          }
-          let leaves: any[] = [];
-          n.children.forEach((child: any) => {
-            leaves = leaves.concat(collectLeaves(child));
-          });
-          return leaves;
-        };
-
         const allLeaves = collectLeaves(node);
-        const startX = padding; // Start from left padding
+        const startX = PADDING; // Start from left padding
 
-        // Position all leaves with consistent spacing
+        // // Position all leaves with consistent spacing
         allLeaves.forEach((leaf: any, i: number) => {
-          leaf.x = startX + i * leafSpacing;
-          leaf.y = y + levelHeight * (treeDepth - 1); // All leaves go to the bottom level (dynamically calculated)
+          leaf.x = startX + i * LEFT_SPACING;
+          leaf.y = y + LEVEL_HEIGHT * (treeDepth - 1); // All leaves go to the bottom level (dynamically calculated)
         });
 
-        // Now position internal nodes above their leaf ranges
-        const positionInternalNodes = (n: any, currentLevel: number): void => {
-          if (!n.children || n.children.length === 0) return; // Skip leaves
-
-          // Find the range of leaves under this node
-          const leavesUnder = collectLeaves(n);
-          const leftmostLeaf = leavesUnder[0];
-          const rightmostLeaf = leavesUnder[leavesUnder.length - 1];
-
-          // Position this internal node centered over its leaves, but ensure it doesn't go beyond left padding
-          const centeredX = (leftmostLeaf.x + rightmostLeaf.x) / 2;
-          const minX = padding + nodeWidth / 2; // Ensure node doesn't extend beyond left padding
-          n.x = Math.max(minX, centeredX);
-          n.y = y + levelHeight * currentLevel;
-
-          // Position child internal nodes
-          n.children.forEach((child: any) => {
-            positionInternalNodes(child, currentLevel + 1);
-          });
-        };
-
         // Position all internal nodes starting from level 0
-        positionInternalNodes(node, 0);
+        positionInternalNodes(node, 0, y);
       }
+
+      return result;
     };
 
     // Start positioning - width is now calculated to fit perfectly
@@ -251,7 +261,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       x: node.x,
       y: node.y,
       data: node.data,
-      level: node.level,
     }));
 
     // Create visual links
@@ -263,9 +272,9 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
           visualLinks.push({
             id: `link-${linkId++}`,
             x1: node.x,
-            y1: node.y + nodeHeight / 2,
+            y1: node.y + NODE_HEIGHT / 2,
             x2: child.x,
-            y2: child.y - nodeHeight / 2,
+            y2: child.y - NODE_HEIGHT / 2,
           });
         });
       }
@@ -281,8 +290,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
 
       visualLeafArrows.push({
         id: `leaf-arrow-${i}`,
-        startX: currentLeaf.x + nodeWidth / 2,
-        endX: nextLeaf.x - nodeWidth / 2,
+        startX: currentLeaf.x + NODE_WIDTH / 2,
+        endX: nextLeaf.x - NODE_WIDTH / 2,
         y: currentLeaf.y,
       });
     }
@@ -298,8 +307,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     const leftmostLeaf = leafNodesForAlignment[0];
     const rightmostLeaf = leafNodesForAlignment[leafNodesForAlignment.length - 1];
 
-    const heapX = leftmostLeaf.x - nodeWidth / 2;
-    const heapWidth = rightmostLeaf.x + nodeWidth / 2 - (leftmostLeaf.x - nodeWidth / 2);
+    const heapX = leftmostLeaf.x - NODE_WIDTH / 2;
+    const heapWidth = rightmostLeaf.x + NODE_WIDTH / 2 - (leftmostLeaf.x - NODE_WIDTH / 2);
 
     // Set heap props for the HeapVisualization component
     setHeapProps({
@@ -312,7 +321,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
         y: node.y,
         data: node.data,
       })),
-      nodeHeight,
+      nodeHeight: NODE_HEIGHT,
     });
   }, [tree]);
 
@@ -342,11 +351,11 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       {/* Nodes */}
       <g className="nodes">
         {nodes.map((node) => (
-          <g key={node.id} transform={`translate(${node.x - nodeWidth / 2}, ${node.y - nodeHeight / 2})`}>
+          <g key={node.id} transform={`translate(${node.x - NODE_WIDTH / 2}, ${node.y - NODE_HEIGHT / 2})`}>
             {/* Node rectangle */}
             <rect
-              width={nodeWidth}
-              height={nodeHeight}
+              width={NODE_WIDTH}
+              height={NODE_HEIGHT}
               fill={node.data.type === "leaf" ? "#E3F2FD" : "#FFF3E0"}
               stroke={node.data.type === "leaf" ? "#2196F3" : "#FF9800"}
               strokeWidth={2}
@@ -356,7 +365,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
             {node.data.type === "leaf" ? (
               <>
                 {/* Leaf node label */}
-                <text x={nodeWidth / 2} y={15} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="10px" fontWeight="bold">
+                <text x={NODE_WIDTH / 2} y={15} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="10px" fontWeight="bold">
                   Leaf
                 </text>
 
@@ -367,7 +376,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
                   const allValues = [...keyValues, ...includeValues];
 
                   return (
-                    <text key={i} x={nodeWidth / 2} y={28 + i * 12} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="9px">
+                    <text key={i} x={NODE_WIDTH / 2} y={28 + i * 12} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="9px">
                       {`[${allValues.join(", ")}]`}
                     </text>
                   );
@@ -376,7 +385,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
             ) : (
               <>
                 {/* Internal node label */}
-                <text x={nodeWidth / 2} y={20} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="12px" fontWeight="bold">
+                <text x={NODE_WIDTH / 2} y={20} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="12px" fontWeight="bold">
                   Node
                 </text>
 
@@ -391,7 +400,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
                     return node.data.keys.map((key: any, i: number) => {
                       const keyText = Array.isArray(key) ? `[${key.map((k) => (typeof k === "string" ? `"${k}"` : k)).join(", ")}]` : key;
                       return (
-                        <text key={i} x={nodeWidth / 2} y={32 + i * 12} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="9px">
+                        <text key={i} x={NODE_WIDTH / 2} y={32 + i * 12} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="9px">
                           {keyText}
                         </text>
                       );
@@ -400,7 +409,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
                     // Display keys horizontally for numbers
                     const keyTexts = node.data.keys.map((key: any) => (Array.isArray(key) && key.length > 1 ? `[${key.join(", ")}]` : key));
                     return (
-                      <text x={nodeWidth / 2} y={37} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="11px">
+                      <text x={NODE_WIDTH / 2} y={37} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="11px">
                         {`[${keyTexts.join(", ")}]`}
                       </text>
                     );

@@ -18,3 +18,14 @@ export type BTreeInternalNode = {
 };
 
 export type BTreeNode = BTreeInternalNode | BTreeLeafNode;
+
+export type BTreeRootNode = {
+  node: BTreeNode;
+  children: BTreeRootNode[];
+};
+
+export type BTreeRootNodePositioned = BTreeRootNode & {
+  x: number;
+  y: number;
+  children: BTreeRootNodePositioned[];
+};
