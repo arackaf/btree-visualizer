@@ -369,36 +369,31 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       }
     });
 
-    // Conditionally set up heap visualization props
-    if (SHOW_HEAP) {
-      // Calculate heap position and dimensions
-      const heapY = height - heapHeight - 20;
-      const leafNodesForAlignment = allNodes.filter((node) => node.data.type === "leaf");
-      const leftmostLeaf = leafNodesForAlignment[0];
-      const rightmostLeaf = leafNodesForAlignment[leafNodesForAlignment.length - 1];
+    // Calculate heap position and dimensions
+    const heapY = height - heapHeight - 20;
+    const leafNodesForAlignment = allNodes.filter((node) => node.data.type === "leaf");
+    const leftmostLeaf = leafNodesForAlignment[0];
+    const rightmostLeaf = leafNodesForAlignment[leafNodesForAlignment.length - 1];
 
-      const heapX = leftmostLeaf.x - nodeWidth / 2;
-      const heapWidth = rightmostLeaf.x + nodeWidth / 2 - (leftmostLeaf.x - nodeWidth / 2);
+    const heapX = leftmostLeaf.x - nodeWidth / 2;
+    const heapWidth = rightmostLeaf.x + nodeWidth / 2 - (leftmostLeaf.x - nodeWidth / 2);
 
-      // Set heap props for the HeapVisualization component
-      setHeapProps({
-        svg,
-        x: heapX,
-        y: heapY,
-        width: heapWidth,
-        height: heapHeight,
-        leafNodes: leafNodesForAlignment,
-        nodeHeight,
-      });
-    } else {
-      setHeapProps(null);
-    }
+    // Set heap props for the HeapVisualization component
+    setHeapProps({
+      svg,
+      x: heapX,
+      y: heapY,
+      width: heapWidth,
+      height: heapHeight,
+      leafNodes: leafNodesForAlignment,
+      nodeHeight,
+    });
   }, [tree]);
 
   return (
     <>
       <svg ref={svgRef}></svg>
-      {heapProps && <HeapVisualization {...heapProps} />}
+      {SHOW_HEAP && heapProps ? <HeapVisualization {...heapProps} /> : null}
     </>
   );
 };
