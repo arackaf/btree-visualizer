@@ -23,116 +23,91 @@ interface BTreeInternalNode {
 
 type BTreeNode = BTreeInternalNode | BTreeLeafNode;
 
-// Hardcoded B+ tree with 3 levels of internal nodes + leaf level
-const createSampleBTree = (): BTreeNode => {
-  // Leaf nodes (level 4 - bottom layer)
-  const leaf1: BTreeLeafNode = {
-    type: "leaf",
-    keys: [1, 3, 5],
-    records: [
-      { id: 1, title: "Apple" },
-      { id: 3, title: "Banana" },
-      { id: 5, title: "Cherry" },
-    ],
-  };
+// Configuration: Data records to be indexed
+const DATA_RECORDS: BTreeRecord[] = [
+  { id: 1, title: "Apple" },
+  { id: 3, title: "Banana" },
+  { id: 5, title: "Cherry" },
+  { id: 7, title: "Date" },
+  { id: 9, title: "Elderberry" },
+  { id: 11, title: "Fig" },
+  { id: 13, title: "Grape" },
+  { id: 15, title: "Honeydew" },
+  { id: 17, title: "Kiwi" },
+  { id: 19, title: "Lemon" },
+  { id: 21, title: "Mango" },
+  { id: 23, title: "Orange" },
+  { id: 25, title: "Papaya" },
+  { id: 27, title: "Quince" },
+  { id: 29, title: "Raspberry" },
+  { id: 31, title: "Strawberry" },
+  { id: 33, title: "Tangerine" },
+  { id: 35, title: "Watermelon" },
+];
 
-  const leaf2: BTreeLeafNode = {
-    type: "leaf",
-    keys: [7, 9, 11],
-    records: [
-      { id: 7, title: "Date" },
-      { id: 9, title: "Elderberry" },
-      { id: 11, title: "Fig" },
-    ],
-  };
+// Configuration: B+ tree parameters
+const BTREE_CONFIG = {
+  maxKeysPerLeaf: 3, // Maximum keys in a leaf node
+  maxKeysPerInternal: 2, // Maximum keys in an internal node
+  minKeysPerLeaf: 1, // Minimum keys in a leaf node (except root)
+  minKeysPerInternal: 1, // Minimum keys in an internal node (except root)
+};
 
-  const leaf3: BTreeLeafNode = {
-    type: "leaf",
-    keys: [13, 15, 17],
-    records: [
-      { id: 13, title: "Grape" },
-      { id: 15, title: "Honeydew" },
-      { id: 17, title: "Kiwi" },
-    ],
-  };
+// Build B+ tree from data records
+const createBTreeFromData = (records: BTreeRecord[]): BTreeNode => {
+  // Sort records by id
+  const sortedRecords = [...records].sort((a, b) => a.id - b.id);
 
-  const leaf4: BTreeLeafNode = {
-    type: "leaf",
-    keys: [19, 21, 23],
-    records: [
-      { id: 19, title: "Lemon" },
-      { id: 21, title: "Mango" },
-      { id: 23, title: "Orange" },
-    ],
-  };
-
-  const leaf5: BTreeLeafNode = {
-    type: "leaf",
-    keys: [25, 27, 29],
-    records: [
-      { id: 25, title: "Papaya" },
-      { id: 27, title: "Quince" },
-      { id: 29, title: "Raspberry" },
-    ],
-  };
-
-  const leaf6: BTreeLeafNode = {
-    type: "leaf",
-    keys: [31, 33, 35],
-    records: [
-      { id: 31, title: "Strawberry" },
-      { id: 33, title: "Tangerine" },
-      { id: 35, title: "Watermelon" },
-    ],
-  };
+  // Create leaf nodes
+  const leaves: BTreeLeafNode[] = [];
+  for (let i = 0; i < sortedRecords.length; i += BTREE_CONFIG.maxKeysPerLeaf) {
+    const leafRecords = sortedRecords.slice(i, i + BTREE_CONFIG.maxKeysPerLeaf);
+    const leaf: BTreeLeafNode = {
+      type: "leaf",
+      keys: leafRecords.map((r) => r.id),
+      records: leafRecords,
+    };
+    leaves.push(leaf);
+  }
 
   // Link leaf nodes
-  leaf1.next = leaf2;
-  leaf2.next = leaf3;
-  leaf3.next = leaf4;
-  leaf4.next = leaf5;
-  leaf5.next = leaf6;
+  for (let i = 0; i < leaves.length - 1; i++) {
+    leaves[i].next = leaves[i + 1];
+  }
 
-  // Level 3 internal nodes
-  const internal3_1: BTreeInternalNode = {
-    type: "internal",
-    keys: [7],
-    children: [leaf1, leaf2],
-  };
+  // Build internal levels bottom-up
+  let currentLevel: BTreeNode[] = leaves;
 
-  const internal3_2: BTreeInternalNode = {
-    type: "internal",
-    keys: [19],
-    children: [leaf3, leaf4],
-  };
+  while (currentLevel.length > 1) {
+    const nextLevel: BTreeInternalNode[] = [];
 
-  const internal3_3: BTreeInternalNode = {
-    type: "internal",
-    keys: [31],
-    children: [leaf5, leaf6],
-  };
+    for (let i = 0; i < currentLevel.length; i += BTREE_CONFIG.maxKeysPerInternal + 1) {
+      const children = currentLevel.slice(i, i + BTREE_CONFIG.maxKeysPerInternal + 1);
 
-  // Level 2 internal nodes
-  const internal2_1: BTreeInternalNode = {
-    type: "internal",
-    keys: [13],
-    children: [internal3_1, internal3_2],
-  };
+      // Create keys for internal node (first key of each child except the first)
+      const keys: number[] = [];
+      for (let j = 1; j < children.length; j++) {
+        if (children[j].type === "leaf") {
+          keys.push(children[j].keys[0]);
+        } else {
+          // For internal nodes, use the first key
+          keys.push(children[j].keys[0]);
+        }
+      }
 
-  const internal2_2: BTreeInternalNode = {
-    type: "internal",
-    keys: [25],
-    children: [internal3_3],
-  };
+      const internalNode: BTreeInternalNode = {
+        type: "internal",
+        keys,
+        children,
+      };
 
-  // Level 1 root node
-  const root: BTreeInternalNode = {
-    type: "internal",
-    keys: [20],
-    children: [internal2_1, internal2_2],
-  };
+      nextLevel.push(internalNode);
+    }
 
-  return root;
+    currentLevel = nextLevel;
+  }
+
+  return currentLevel[0];
 };
 
 interface TreeVisualizationProps {
@@ -328,7 +303,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
 };
 
 function App() {
-  const tree = createSampleBTree();
+  const tree = createBTreeFromData(DATA_RECORDS);
 
   return (
     <div className="App">
