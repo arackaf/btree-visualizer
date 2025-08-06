@@ -328,22 +328,12 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
 
         if (hasStringKeys) {
           // Display keys vertically for better readability
-          nodeGroup
-            .append("text")
-            .attr("x", nodeWidth / 2)
-            .attr("y", 30)
-            .attr("text-anchor", "middle")
-            .attr("font-family", "Arial, sans-serif")
-            .attr("font-size", "10px")
-            .attr("font-weight", "bold")
-            .text("Keys:");
-
           node.data.keys.forEach((key: any, i: number) => {
             const keyText = Array.isArray(key) ? `[${key.map((k) => (typeof k === "string" ? `"${k}"` : k)).join(", ")}]` : key;
             nodeGroup
               .append("text")
               .attr("x", nodeWidth / 2)
-              .attr("y", 42 + i * 10)
+              .attr("y", 32 + i * 12)
               .attr("text-anchor", "middle")
               .attr("font-family", "Arial, sans-serif")
               .attr("font-size", "9px")
@@ -355,11 +345,11 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
           nodeGroup
             .append("text")
             .attr("x", nodeWidth / 2)
-            .attr("y", 35)
+            .attr("y", 37)
             .attr("text-anchor", "middle")
             .attr("font-family", "Arial, sans-serif")
             .attr("font-size", "11px")
-            .text(`Keys: [${keyTexts.join(", ")}]`);
+            .text(`[${keyTexts.join(", ")}]`);
         }
       }
     });
