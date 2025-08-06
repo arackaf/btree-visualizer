@@ -355,10 +355,14 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       }
     });
 
-    // Draw heap below the tree
+    // Draw heap below the tree, aligned with leaf nodes
     const heapY = height - heapHeight - 20;
-    const heapWidth = width - padding * 2;
-    const heapX = padding;
+    const leafNodesForAlignment = allNodes.filter((node) => node.data.type === "leaf");
+    const leftmostLeaf = leafNodesForAlignment[0];
+    const rightmostLeaf = leafNodesForAlignment[leafNodesForAlignment.length - 1];
+
+    const heapX = leftmostLeaf.x - nodeWidth / 2;
+    const heapWidth = rightmostLeaf.x + nodeWidth / 2 - (leftmostLeaf.x - nodeWidth / 2);
 
     // Draw simple oval heap
     const heap = svg.append("g").attr("class", "heap");
