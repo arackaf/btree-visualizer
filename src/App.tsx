@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import "./App.css";
 import type { BTreeNode } from "./types";
 
@@ -151,37 +151,33 @@ const calculateTreeDepth = (node: any): number => {
 };
 
 const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
-  const [svgDimensions, setSvgDimensions] = React.useState({ width: 0, height: 0 });
   const [nodes, setNodes] = React.useState<VisualNode[]>([]);
   const [links, setLinks] = React.useState<VisualLink[]>([]);
   const [leafArrows, setLeafArrows] = React.useState<LeafArrow[]>([]);
   const [heapProps, setHeapProps] = React.useState<HeapVisualizationProps | null>();
 
+  const nodeWidth = 120;
+  const nodeHeight = 60;
+  const levelHeight = 140;
+  const leafSpacing = 160;
+
+  // Calculate required width based on actual data
+  const totalLeaves = Math.ceil(indexConfig.data.length / BTREE_CONFIG.maxKeysPerLeaf);
+  const treeWidth = (totalLeaves - 1) * leafSpacing + nodeWidth;
+  const padding = 200;
+
+  const hierarchyRoot = useMemo(() => createHierarchy(tree), [tree]);
+  const treeDepth = useMemo(() => calculateTreeDepth(hierarchyRoot), [hierarchyRoot]);
+
+  const width = treeWidth + padding * 2;
+  const heapHeight = 120;
+
+  const baseTreeHeight = 80; // Top padding
+
+  const dynamicTreeHeight = baseTreeHeight + (treeDepth - 1) * levelHeight + nodeHeight + 40; // Bottom padding
+  const height = SHOW_HEAP ? dynamicTreeHeight + heapHeight + 60 : dynamicTreeHeight;
+
   useEffect(() => {
-    const nodeWidth = 120;
-    const nodeHeight = 60;
-    const levelHeight = 140;
-    const leafSpacing = 160;
-
-    // Calculate required width based on actual data
-    const totalLeaves = Math.ceil(indexConfig.data.length / BTREE_CONFIG.maxKeysPerLeaf);
-    const treeWidth = (totalLeaves - 1) * leafSpacing + nodeWidth;
-    const padding = 200;
-
-    const hierarchyRoot = createHierarchy(tree);
-    const treeDepth = calculateTreeDepth(hierarchyRoot);
-
-    const width = treeWidth + padding * 2;
-    const heapHeight = 120;
-
-    // Calculate dynamic height based on tree depth
-    const baseTreeHeight = 80; // Top padding
-    const dynamicTreeHeight = baseTreeHeight + (treeDepth - 1) * levelHeight + nodeHeight + 40; // Bottom padding
-    const height = SHOW_HEAP ? dynamicTreeHeight + heapHeight + 60 : dynamicTreeHeight;
-
-    // Set SVG dimensions
-    setSvgDimensions({ width, height });
-
     // Calculate positions for nodes with tighter leaf spacing
     const positionNodes = (node: any, leftBound: number, rightBound: number, y: number): void => {
       const centerX = (leftBound + rightBound) / 2;
@@ -320,11 +316,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     });
   }, [tree]);
 
-  const nodeWidth = 120;
-  const nodeHeight = 60;
-
   return (
-    <svg width={svgDimensions.width} height={svgDimensions.height}>
+    <svg width={width} height={height}>
       {/* Links */}
       <g className="links">
         {links.map((link) => (
@@ -426,7 +419,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
 };
 
 function App() {
-  const tree = createBTreeFromData(indexConfig);
+  const tree = useMemo(() => createBTreeFromData(indexConfig), [indexConfig]);
 
   return (
     <div className="App">
