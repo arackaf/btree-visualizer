@@ -1,5 +1,4 @@
-import React, { useEffect, useRef } from "react";
-import * as d3 from "d3";
+import React, { useEffect } from "react";
 import "./App.css";
 import type { BTreeNode } from "./types";
 
@@ -109,16 +108,56 @@ interface TreeVisualizationProps {
   tree: BTreeNode;
 }
 
+// Types for visualization data
+interface VisualNode {
+  id: string;
+  x: number;
+  y: number;
+  data: BTreeNode;
+  level: number;
+}
+
+interface VisualLink {
+  id: string;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+interface LeafArrow {
+  id: string;
+  startX: number;
+  endX: number;
+  y: number;
+}
+
+// Create hierarchy data
+const createHierarchy = (node: BTreeNode, level: number = 0): any => {
+  const hierarchyNode = {
+    data: node,
+    level,
+    children: node.type === "internal" ? node.children.map((child) => createHierarchy(child, level + 1)) : [],
+  };
+  return hierarchyNode;
+};
+
+// Calculate the actual tree depth
+const calculateTreeDepth = (node: any): number => {
+  if (!node.children || node.children.length === 0) {
+    return 1; // Leaf level
+  }
+  return 1 + Math.max(...node.children.map((child: any) => calculateTreeDepth(child)));
+};
+
 const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
-  const svgRef = useRef<SVGSVGElement>(null);
+  const [svgDimensions, setSvgDimensions] = React.useState({ width: 0, height: 0 });
+  const [nodes, setNodes] = React.useState<VisualNode[]>([]);
+  const [links, setLinks] = React.useState<VisualLink[]>([]);
+  const [leafArrows, setLeafArrows] = React.useState<LeafArrow[]>([]);
   const [heapProps, setHeapProps] = React.useState<HeapVisualizationProps | null>();
 
   useEffect(() => {
-    if (!svgRef.current) return;
-
-    const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();
-
     const nodeWidth = 120;
     const nodeHeight = 60;
     const levelHeight = 140;
@@ -128,23 +167,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     const totalLeaves = Math.ceil(indexConfig.data.length / BTREE_CONFIG.maxKeysPerLeaf);
     const treeWidth = (totalLeaves - 1) * leafSpacing + nodeWidth;
     const padding = 200;
-    // Create hierarchy data for D3
-    const createHierarchy = (node: BTreeNode, level: number = 0): any => {
-      const hierarchyNode = {
-        data: node,
-        level,
-        children: node.type === "internal" ? node.children.map((child) => createHierarchy(child, level + 1)) : [],
-      };
-      return hierarchyNode;
-    };
-
-    // Calculate the actual tree depth
-    const calculateTreeDepth = (node: any): number => {
-      if (!node.children || node.children.length === 0) {
-        return 1; // Leaf level
-      }
-      return 1 + Math.max(...node.children.map((child: any) => calculateTreeDepth(child)));
-    };
 
     const hierarchyRoot = createHierarchy(tree);
     const treeDepth = calculateTreeDepth(hierarchyRoot);
@@ -157,7 +179,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     const dynamicTreeHeight = baseTreeHeight + (treeDepth - 1) * levelHeight + nodeHeight + 40; // Bottom padding
     const height = SHOW_HEAP ? dynamicTreeHeight + heapHeight + 60 : dynamicTreeHeight;
 
-    svg.attr("width", width).attr("height", height);
+    // Set SVG dimensions
+    setSvgDimensions({ width, height });
 
     // Calculate positions for nodes with tighter leaf spacing
     const positionNodes = (node: any, leftBound: number, rightBound: number, y: number): void => {
@@ -226,150 +249,56 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     };
     collectNodes(hierarchyRoot);
 
-    // Draw connections
-    const links = svg.append("g").attr("class", "links");
+    // Create visual nodes with unique IDs
+    const visualNodes: VisualNode[] = allNodes.map((node, index) => ({
+      id: `node-${index}`,
+      x: node.x,
+      y: node.y,
+      data: node.data,
+      level: node.level,
+    }));
+
+    // Create visual links
+    const visualLinks: VisualLink[] = [];
+    let linkId = 0;
     allNodes.forEach((node) => {
       if (node.children) {
         node.children.forEach((child: any) => {
-          links
-            .append("line")
-            .attr("x1", node.x)
-            .attr("y1", node.y + nodeHeight / 2)
-            .attr("x2", child.x)
-            .attr("y2", child.y - nodeHeight / 2)
-            .attr("stroke", "#666")
-            .attr("stroke-width", 2);
+          visualLinks.push({
+            id: `link-${linkId++}`,
+            x1: node.x,
+            y1: node.y + nodeHeight / 2,
+            x2: child.x,
+            y2: child.y - nodeHeight / 2,
+          });
         });
       }
     });
 
-    // Draw bidirectional arrows between leaf nodes
-    const leafArrows = svg.append("g").attr("class", "leaf-arrows");
+    // Create leaf arrows
     const leafNodes = allNodes.filter((node) => node.data.type === "leaf");
+    const visualLeafArrows: LeafArrow[] = [];
 
     for (let i = 0; i < leafNodes.length - 1; i++) {
       const currentLeaf = leafNodes[i];
       const nextLeaf = leafNodes[i + 1];
 
-      const arrowY = currentLeaf.y; // Exact vertical center of the leaf box
-      const startX = currentLeaf.x + nodeWidth / 2; // Right edge of current leaf
-      const endX = nextLeaf.x - nodeWidth / 2; // Left edge of next leaf
-
-      // Main line
-      leafArrows
-        .append("line")
-        .attr("x1", startX)
-        .attr("y1", arrowY)
-        .attr("x2", endX)
-        .attr("y2", arrowY)
-        .attr("stroke", "#333")
-        .attr("stroke-width", 1.5);
-
-      // Left arrow head (pointing left)
-      leafArrows
-        .append("polygon")
-        .attr("points", `${startX + 8},${arrowY - 4} ${startX},${arrowY} ${startX + 8},${arrowY + 4}`)
-        .attr("fill", "#333");
-
-      // Right arrow head (pointing right)
-      leafArrows
-        .append("polygon")
-        .attr("points", `${endX - 8},${arrowY - 4} ${endX},${arrowY} ${endX - 8},${arrowY + 4}`)
-        .attr("fill", "#333");
+      visualLeafArrows.push({
+        id: `leaf-arrow-${i}`,
+        startX: currentLeaf.x + nodeWidth / 2,
+        endX: nextLeaf.x - nodeWidth / 2,
+        y: currentLeaf.y,
+      });
     }
 
-    // Draw nodes
-    const nodes = svg.append("g").attr("class", "nodes");
-
-    allNodes.forEach((node) => {
-      const nodeGroup = nodes.append("g").attr("transform", `translate(${node.x - nodeWidth / 2}, ${node.y - nodeHeight / 2})`);
-
-      // Node rectangle
-      nodeGroup
-        .append("rect")
-        .attr("width", nodeWidth)
-        .attr("height", nodeHeight)
-        .attr("fill", node.data.type === "leaf" ? "#E3F2FD" : "#FFF3E0")
-        .attr("stroke", node.data.type === "leaf" ? "#2196F3" : "#FF9800")
-        .attr("stroke-width", 2)
-        .attr("rx", 5);
-
-      if (node.data.type === "leaf") {
-        // Leaf node label
-        nodeGroup
-          .append("text")
-          .attr("x", nodeWidth / 2)
-          .attr("y", 15)
-          .attr("text-anchor", "middle")
-          .attr("font-family", "Arial, sans-serif")
-          .attr("font-size", "10px")
-          .attr("font-weight", "bold")
-          .text("Leaf");
-
-        // Display tuples in leaf nodes
-        node.data.records.forEach((record: any, i: number) => {
-          // Format key columns and include columns
-          const keyValues = indexConfig.keyColumns.map((col) => record[col]);
-          const includeValues = indexConfig.includeColumns.map((col) => `"${record[col]}"`);
-          const allValues = [...keyValues, ...includeValues];
-
-          nodeGroup
-            .append("text")
-            .attr("x", nodeWidth / 2)
-            .attr("y", 28 + i * 12)
-            .attr("text-anchor", "middle")
-            .attr("font-family", "Arial, sans-serif")
-            .attr("font-size", "9px")
-            .text(`[${allValues.join(", ")}]`);
-        });
-      } else {
-        // Internal node label
-        nodeGroup
-          .append("text")
-          .attr("x", nodeWidth / 2)
-          .attr("y", 20)
-          .attr("text-anchor", "middle")
-          .attr("font-family", "Arial, sans-serif")
-          .attr("font-size", "12px")
-          .attr("font-weight", "bold")
-          .text("Node");
-
-        // Keys for internal nodes
-        const hasStringKeys = node.data.keys.some((key: any) =>
-          Array.isArray(key) ? key.some((k) => typeof k === "string") : typeof key === "string"
-        );
-
-        if (hasStringKeys) {
-          // Display keys vertically for better readability
-          node.data.keys.forEach((key: any, i: number) => {
-            const keyText = Array.isArray(key) ? `[${key.map((k) => (typeof k === "string" ? `"${k}"` : k)).join(", ")}]` : key;
-            nodeGroup
-              .append("text")
-              .attr("x", nodeWidth / 2)
-              .attr("y", 32 + i * 12)
-              .attr("text-anchor", "middle")
-              .attr("font-family", "Arial, sans-serif")
-              .attr("font-size", "9px")
-              .text(keyText);
-          });
-        } else {
-          // Display keys horizontally for numbers
-          const keyTexts = node.data.keys.map((key: any) => (Array.isArray(key) && key.length > 1 ? `[${key.join(", ")}]` : key));
-          nodeGroup
-            .append("text")
-            .attr("x", nodeWidth / 2)
-            .attr("y", 37)
-            .attr("text-anchor", "middle")
-            .attr("font-family", "Arial, sans-serif")
-            .attr("font-size", "11px")
-            .text(`[${keyTexts.join(", ")}]`);
-        }
-      }
-    });
+    // Set all the state
+    setNodes(visualNodes);
+    setLinks(visualLinks);
+    setLeafArrows(visualLeafArrows);
 
     // Calculate heap position and dimensions
     const heapY = height - heapHeight - 20;
-    const leafNodesForAlignment = allNodes.filter((node) => node.data.type === "leaf");
+    const leafNodesForAlignment = leafNodes;
     const leftmostLeaf = leafNodesForAlignment[0];
     const rightmostLeaf = leafNodesForAlignment[leafNodesForAlignment.length - 1];
 
@@ -382,15 +311,117 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       y: heapY,
       width: heapWidth,
       height: heapHeight,
-      leafNodes: leafNodesForAlignment,
+      leafNodes: leafNodesForAlignment.map((node) => ({
+        x: node.x,
+        y: node.y,
+        data: node.data,
+      })),
       nodeHeight,
     });
   }, [tree]);
 
+  const nodeWidth = 120;
+  const nodeHeight = 60;
+
   return (
-    <>
-      <svg ref={svgRef}>{SHOW_HEAP && heapProps ? <HeapVisualization {...heapProps} /> : null}</svg>
-    </>
+    <svg width={svgDimensions.width} height={svgDimensions.height}>
+      {/* Links */}
+      <g className="links">
+        {links.map((link) => (
+          <line key={link.id} x1={link.x1} y1={link.y1} x2={link.x2} y2={link.y2} stroke="#666" strokeWidth={2} />
+        ))}
+      </g>
+
+      {/* Leaf arrows */}
+      <g className="leaf-arrows">
+        {leafArrows.map((arrow) => (
+          <g key={arrow.id}>
+            {/* Main line */}
+            <line x1={arrow.startX} y1={arrow.y} x2={arrow.endX} y2={arrow.y} stroke="#333" strokeWidth={1.5} />
+            {/* Left arrow head (pointing left) */}
+            <polygon points={`${arrow.startX + 8},${arrow.y - 4} ${arrow.startX},${arrow.y} ${arrow.startX + 8},${arrow.y + 4}`} fill="#333" />
+            {/* Right arrow head (pointing right) */}
+            <polygon points={`${arrow.endX - 8},${arrow.y - 4} ${arrow.endX},${arrow.y} ${arrow.endX - 8},${arrow.y + 4}`} fill="#333" />
+          </g>
+        ))}
+      </g>
+
+      {/* Nodes */}
+      <g className="nodes">
+        {nodes.map((node) => (
+          <g key={node.id} transform={`translate(${node.x - nodeWidth / 2}, ${node.y - nodeHeight / 2})`}>
+            {/* Node rectangle */}
+            <rect
+              width={nodeWidth}
+              height={nodeHeight}
+              fill={node.data.type === "leaf" ? "#E3F2FD" : "#FFF3E0"}
+              stroke={node.data.type === "leaf" ? "#2196F3" : "#FF9800"}
+              strokeWidth={2}
+              rx={5}
+            />
+
+            {node.data.type === "leaf" ? (
+              <>
+                {/* Leaf node label */}
+                <text x={nodeWidth / 2} y={15} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="10px" fontWeight="bold">
+                  Leaf
+                </text>
+
+                {/* Display tuples in leaf nodes */}
+                {node.data.records.map((record: any, i: number) => {
+                  const keyValues = indexConfig.keyColumns.map((col) => record[col]);
+                  const includeValues = indexConfig.includeColumns.map((col) => `"${record[col]}"`);
+                  const allValues = [...keyValues, ...includeValues];
+
+                  return (
+                    <text key={i} x={nodeWidth / 2} y={28 + i * 12} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="9px">
+                      {`[${allValues.join(", ")}]`}
+                    </text>
+                  );
+                })}
+              </>
+            ) : (
+              <>
+                {/* Internal node label */}
+                <text x={nodeWidth / 2} y={20} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="12px" fontWeight="bold">
+                  Node
+                </text>
+
+                {/* Keys for internal nodes */}
+                {(() => {
+                  const hasStringKeys = node.data.keys.some((key: any) =>
+                    Array.isArray(key) ? key.some((k) => typeof k === "string") : typeof key === "string"
+                  );
+
+                  if (hasStringKeys) {
+                    // Display keys vertically for better readability
+                    return node.data.keys.map((key: any, i: number) => {
+                      const keyText = Array.isArray(key) ? `[${key.map((k) => (typeof k === "string" ? `"${k}"` : k)).join(", ")}]` : key;
+                      return (
+                        <text key={i} x={nodeWidth / 2} y={32 + i * 12} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="9px">
+                          {keyText}
+                        </text>
+                      );
+                    });
+                  } else {
+                    // Display keys horizontally for numbers
+                    const keyTexts = node.data.keys.map((key: any) => (Array.isArray(key) && key.length > 1 ? `[${key.join(", ")}]` : key));
+                    return (
+                      <text x={nodeWidth / 2} y={37} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="11px">
+                        {`[${keyTexts.join(", ")}]`}
+                      </text>
+                    );
+                  }
+                })()}
+              </>
+            )}
+          </g>
+        ))}
+      </g>
+
+      {/* Heap visualization */}
+      {SHOW_HEAP && heapProps ? <HeapVisualization {...heapProps} /> : null}
+    </svg>
   );
 };
 
