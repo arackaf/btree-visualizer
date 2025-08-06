@@ -1,71 +1,25 @@
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import "./App.css";
+import type { BTreeConfig } from "./types";
+
+import { indexConfig } from "./data/idTitle";
 
 // B+ Tree data structures
-interface BTreeRecord {
-  id: number;
-  title: string;
-}
-
 interface BTreeLeafNode {
   type: "leaf";
-  keys: number[];
-  records: BTreeRecord[];
+  keys: any[];
+  records: Record<string, any>[];
   next?: BTreeLeafNode;
 }
 
 interface BTreeInternalNode {
   type: "internal";
-  keys: number[];
+  keys: any[];
   children: (BTreeInternalNode | BTreeLeafNode)[];
 }
 
 type BTreeNode = BTreeInternalNode | BTreeLeafNode;
-
-// Configuration: Data records to be indexed
-const DATA_RECORDS: BTreeRecord[] = [
-  { id: 1, title: "Apple" },
-  { id: 3, title: "Apricot" },
-  { id: 5, title: "Avocado" },
-  { id: 7, title: "Banana" },
-  { id: 9, title: "Blackberry" },
-  { id: 11, title: "Blueberry" },
-  { id: 13, title: "Cherry" },
-  { id: 15, title: "Coconut" },
-  { id: 17, title: "Cranberry" },
-  { id: 19, title: "Date" },
-  { id: 21, title: "Dragonfruit" },
-  { id: 23, title: "Elderberry" },
-  { id: 25, title: "Fig" },
-  { id: 27, title: "Grape" },
-  { id: 29, title: "Grapefruit" },
-  { id: 31, title: "Guava" },
-  { id: 33, title: "Honeydew" },
-  { id: 35, title: "Jackfruit" },
-  { id: 37, title: "Kiwi" },
-  { id: 39, title: "Lemon" },
-  { id: 41, title: "Lime" },
-  { id: 43, title: "Mango" },
-  { id: 45, title: "Nectarine" },
-  { id: 47, title: "Orange" },
-  { id: 49, title: "Papaya" },
-  { id: 51, title: "Passionfruit" },
-  { id: 53, title: "Peach" },
-  { id: 55, title: "Pear" },
-  { id: 57, title: "Pineapple" },
-  { id: 59, title: "Plum" },
-  { id: 61, title: "Pomegranate" },
-  { id: 63, title: "Quince" },
-  { id: 65, title: "Raspberry" },
-  { id: 67, title: "Starfruit" },
-  { id: 69, title: "Strawberry" },
-  { id: 71, title: "Tangerine" },
-  { id: 73, title: "Watermelon" },
-  { id: 75, title: "Cantaloupe" },
-  { id: 77, title: "Persimmon" },
-  { id: 79, title: "Pomelo" },
-];
 
 // Configuration: B+ tree parameters
 const BTREE_CONFIG = {
@@ -75,10 +29,30 @@ const BTREE_CONFIG = {
   minKeysPerInternal: 1, // Minimum keys in an internal node (except root)
 };
 
+const SHOW_HEAP = false;
+
 // Build B+ tree from data records
-const createBTreeFromData = (records: BTreeRecord[]): BTreeNode => {
-  // Sort records by id
-  const sortedRecords = [...records].sort((a, b) => a.id - b.id);
+const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {
+  // Sort records by all key columns in order
+  const sortedRecords = [...indexConfig.data].sort((a, b) => {
+    for (const keyColumn of indexConfig.keyColumns) {
+      const aVal = a[keyColumn];
+      const bVal = b[keyColumn];
+
+      // Handle different data types
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        const comparison = aVal.localeCompare(bVal);
+        if (comparison !== 0) return comparison;
+      } else if (typeof aVal === "number" && typeof bVal === "number") {
+        if (aVal !== bVal) return aVal - bVal;
+      } else {
+        // Fallback to string comparison
+        const comparison = String(aVal).localeCompare(String(bVal));
+        if (comparison !== 0) return comparison;
+      }
+    }
+    return 0;
+  });
 
   // Create leaf nodes
   const leaves: BTreeLeafNode[] = [];
@@ -86,7 +60,7 @@ const createBTreeFromData = (records: BTreeRecord[]): BTreeNode => {
     const leafRecords = sortedRecords.slice(i, i + BTREE_CONFIG.maxKeysPerLeaf);
     const leaf: BTreeLeafNode = {
       type: "leaf",
-      keys: leafRecords.map((r) => r.id),
+      keys: leafRecords.map((r) => indexConfig.keyColumns.map((col) => r[col])),
       records: leafRecords,
     };
     leaves.push(leaf);
@@ -107,7 +81,7 @@ const createBTreeFromData = (records: BTreeRecord[]): BTreeNode => {
       const children = currentLevel.slice(i, i + BTREE_CONFIG.maxKeysPerInternal + 1);
 
       // Create keys for internal node (first key of each child except the first)
-      const keys: number[] = [];
+      const keys: any[] = [];
       for (let j = 1; j < children.length; j++) {
         if (children[j].type === "leaf") {
           keys.push(children[j].keys[0]);
@@ -151,12 +125,12 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     const leafSpacing = 160;
 
     // Calculate required width based on actual data
-    const totalLeaves = Math.ceil(DATA_RECORDS.length / BTREE_CONFIG.maxKeysPerLeaf);
+    const totalLeaves = Math.ceil(indexConfig.data.length / BTREE_CONFIG.maxKeysPerLeaf);
     const treeWidth = (totalLeaves - 1) * leafSpacing + nodeWidth;
     const padding = 200;
     const width = treeWidth + padding * 2;
     const heapHeight = 120;
-    const height = 700 + heapHeight + 60; // Extra space for heap and arrows
+    const height = SHOW_HEAP ? 700 + heapHeight + 60 : 700; // Extra space for heap and arrows if enabled
 
     svg.attr("width", width).attr("height", height);
 
@@ -192,7 +166,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
         };
 
         const allLeaves = collectLeaves(node);
-        const totalWidth = (allLeaves.length - 1) * leafSpacing;
         const startX = padding; // Start from left padding
 
         // Position all leaves with consistent spacing
@@ -322,6 +295,11 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
 
         // Display tuples in leaf nodes
         node.data.records.forEach((record: any, i: number) => {
+          // Format key columns and include columns
+          const keyValues = indexConfig.keyColumns.map((col) => record[col]);
+          const includeValues = indexConfig.includeColumns.map((col) => `"${record[col]}"`);
+          const allValues = [...keyValues, ...includeValues];
+
           nodeGroup
             .append("text")
             .attr("x", nodeWidth / 2)
@@ -329,7 +307,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
             .attr("text-anchor", "middle")
             .attr("font-family", "Arial, sans-serif")
             .attr("font-size", "9px")
-            .text(`[${record.id}, "${record.title}"]`);
+            .text(`[${allValues.join(", ")}]`);
         });
       } else {
         // Internal node label
@@ -344,107 +322,141 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
           .text("Node");
 
         // Keys for internal nodes
-        nodeGroup
-          .append("text")
-          .attr("x", nodeWidth / 2)
-          .attr("y", 35)
-          .attr("text-anchor", "middle")
-          .attr("font-family", "Arial, sans-serif")
-          .attr("font-size", "11px")
-          .text(`Keys: [${node.data.keys.join(", ")}]`);
+        const hasStringKeys = node.data.keys.some((key: any) =>
+          Array.isArray(key) ? key.some((k) => typeof k === "string") : typeof key === "string"
+        );
+
+        if (hasStringKeys) {
+          // Display keys vertically for better readability
+          nodeGroup
+            .append("text")
+            .attr("x", nodeWidth / 2)
+            .attr("y", 30)
+            .attr("text-anchor", "middle")
+            .attr("font-family", "Arial, sans-serif")
+            .attr("font-size", "10px")
+            .attr("font-weight", "bold")
+            .text("Keys:");
+
+          node.data.keys.forEach((key: any, i: number) => {
+            const keyText = Array.isArray(key) ? `[${key.map((k) => (typeof k === "string" ? `"${k}"` : k)).join(", ")}]` : key;
+            nodeGroup
+              .append("text")
+              .attr("x", nodeWidth / 2)
+              .attr("y", 42 + i * 10)
+              .attr("text-anchor", "middle")
+              .attr("font-family", "Arial, sans-serif")
+              .attr("font-size", "9px")
+              .text(keyText);
+          });
+        } else {
+          // Display keys horizontally for numbers
+          const keyTexts = node.data.keys.map((key: any) => (Array.isArray(key) ? `[${key.join(", ")}]` : key));
+          nodeGroup
+            .append("text")
+            .attr("x", nodeWidth / 2)
+            .attr("y", 35)
+            .attr("text-anchor", "middle")
+            .attr("font-family", "Arial, sans-serif")
+            .attr("font-size", "11px")
+            .text(`Keys: [${keyTexts.join(", ")}]`);
+        }
       }
     });
 
-    // Draw heap below the tree, aligned with leaf nodes
-    const heapY = height - heapHeight - 20;
-    const leafNodesForAlignment = allNodes.filter((node) => node.data.type === "leaf");
-    const leftmostLeaf = leafNodesForAlignment[0];
-    const rightmostLeaf = leafNodesForAlignment[leafNodesForAlignment.length - 1];
+    // Conditionally draw heap visualization
+    if (SHOW_HEAP) {
+      // Draw heap below the tree, aligned with leaf nodes
+      const heapY = height - heapHeight - 20;
+      const leafNodesForAlignment = allNodes.filter((node) => node.data.type === "leaf");
+      const leftmostLeaf = leafNodesForAlignment[0];
+      const rightmostLeaf = leafNodesForAlignment[leafNodesForAlignment.length - 1];
 
-    const heapX = leftmostLeaf.x - nodeWidth / 2;
-    const heapWidth = rightmostLeaf.x + nodeWidth / 2 - (leftmostLeaf.x - nodeWidth / 2);
+      const heapX = leftmostLeaf.x - nodeWidth / 2;
+      const heapWidth = rightmostLeaf.x + nodeWidth / 2 - (leftmostLeaf.x - nodeWidth / 2);
 
-    // Draw simple oval heap
-    const heap = svg.append("g").attr("class", "heap");
+      // Draw simple oval heap
+      const heap = svg.append("g").attr("class", "heap");
 
-    // Create oval shape
-    const ovalCenterX = heapX + heapWidth / 2;
-    const ovalCenterY = heapY + heapHeight / 2;
-    const ovalRadiusX = heapWidth / 2;
-    const ovalRadiusY = heapHeight / 2;
+      // Create oval shape
+      const ovalCenterX = heapX + heapWidth / 2;
+      const ovalCenterY = heapY + heapHeight / 2;
+      const ovalRadiusX = heapWidth / 2;
+      const ovalRadiusY = heapHeight / 2;
 
-    heap
-      .append("ellipse")
-      .attr("cx", ovalCenterX)
-      .attr("cy", ovalCenterY)
-      .attr("rx", ovalRadiusX)
-      .attr("ry", ovalRadiusY)
-      .attr("fill", "#f5f5f5")
-      .attr("stroke", "#999")
-      .attr("stroke-width", 2);
+      heap
+        .append("ellipse")
+        .attr("cx", ovalCenterX)
+        .attr("cy", ovalCenterY)
+        .attr("rx", ovalRadiusX)
+        .attr("ry", ovalRadiusY)
+        .attr("fill", "#f5f5f5")
+        .attr("stroke", "#999")
+        .attr("stroke-width", 2);
 
-    // Add "Heap" label
-    heap
-      .append("text")
-      .attr("x", ovalCenterX)
-      .attr("y", ovalCenterY + 8) // Slight adjustment for better centering
-      .attr("text-anchor", "middle")
-      .attr("font-family", "Arial, sans-serif")
-      .attr("font-size", "24px")
-      .attr("font-weight", "bold")
-      .attr("fill", "#666")
-      .text("Heap");
+      // Add "Heap" label
+      heap
+        .append("text")
+        .attr("x", ovalCenterX)
+        .attr("y", ovalCenterY + 8) // Slight adjustment for better centering
+        .attr("text-anchor", "middle")
+        .attr("font-family", "Arial, sans-serif")
+        .attr("font-size", "24px")
+        .attr("font-weight", "bold")
+        .attr("fill", "#666")
+        .text("Heap");
 
-    // Draw arrows from each leaf to random points in the heap
-    const heapArrows = svg.append("g").attr("class", "heap-arrows");
-    const leafNodesForHeap = allNodes.filter((node) => node.data.type === "leaf");
+      // Draw arrows from each leaf to random points in the heap
+      const heapArrows = svg.append("g").attr("class", "heap-arrows");
+      const leafNodesForHeap = allNodes.filter((node) => node.data.type === "leaf");
 
-    leafNodesForHeap.forEach((leafNode) => {
-      const numArrows = leafNode.data.records.length;
+      leafNodesForHeap.forEach((leafNode) => {
+        const numArrows = leafNode.data.records.length;
 
-      for (let i = 0; i < numArrows; i++) {
-        // Start point: bottom of leaf node
-        const startX = leafNode.x + (i - (numArrows - 1) / 2) * 15; // Spread arrows horizontally
-        const startY = leafNode.y + nodeHeight / 2;
+        for (let i = 0; i < numArrows; i++) {
+          // Start point: bottom of leaf node
+          const startX = leafNode.x + (i - (numArrows - 1) / 2) * 15; // Spread arrows horizontally
+          const startY = leafNode.y + nodeHeight / 2;
 
-        // End point: random location inside the oval heap
-        // Generate random point within the ellipse bounds
-        const heapAngle = Math.random() * 2 * Math.PI;
-        const radiusScale = Math.sqrt(Math.random()) * 0.8; // Keep arrows well inside the oval
-        const endX = ovalCenterX + radiusScale * ovalRadiusX * Math.cos(heapAngle);
-        const endY = ovalCenterY + radiusScale * ovalRadiusY * Math.sin(heapAngle);
+          // End point: random location inside the oval heap
+          // Generate random point within the ellipse bounds
+          const heapAngle = Math.random() * 2 * Math.PI;
+          const radiusScale = Math.sqrt(Math.random()) * 0.8; // Keep arrows well inside the oval
+          const endX = ovalCenterX + radiusScale * ovalRadiusX * Math.cos(heapAngle);
+          const endY = ovalCenterY + radiusScale * ovalRadiusY * Math.sin(heapAngle);
 
-        // Control point for curved arrow
-        const controlX = (startX + endX) / 2;
-        const controlY = startY + (endY - startY) * 0.7;
+          // Control point for curved arrow
+          const controlX = (startX + endX) / 2;
+          const controlY = startY + (endY - startY) * 0.7;
 
-        // Draw curved arrow path
-        const arrowPath = `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
+          // Draw curved arrow path
+          const arrowPath = `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
 
-        heapArrows.append("path").attr("d", arrowPath).attr("stroke", "#666").attr("stroke-width", 1.5).attr("fill", "none");
+          heapArrows.append("path").attr("d", arrowPath).attr("stroke", "#666").attr("stroke-width", 1.5).attr("fill", "none");
 
-        // Add arrowhead at end
-        const angle = Math.atan2(endY - controlY, endX - controlX);
-        const arrowSize = 6;
+          // Add arrowhead at end
+          const angle = Math.atan2(endY - controlY, endX - controlX);
+          const arrowSize = 6;
 
-        heapArrows
-          .append("polygon")
-          .attr(
-            "points",
-            `${endX},${endY} 
-             ${endX - arrowSize * Math.cos(angle - Math.PI / 6)},${endY - arrowSize * Math.sin(angle - Math.PI / 6)} 
-             ${endX - arrowSize * Math.cos(angle + Math.PI / 6)},${endY - arrowSize * Math.sin(angle + Math.PI / 6)}`
-          )
-          .attr("fill", "#666");
-      }
-    });
+          heapArrows
+            .append("polygon")
+            .attr(
+              "points",
+              `${endX},${endY} 
+               ${endX - arrowSize * Math.cos(angle - Math.PI / 6)},${endY - arrowSize * Math.sin(angle - Math.PI / 6)} 
+               ${endX - arrowSize * Math.cos(angle + Math.PI / 6)},${endY - arrowSize * Math.sin(angle + Math.PI / 6)}`
+            )
+            .attr("fill", "#666");
+        }
+      });
+    }
   }, [tree]);
 
   return <svg ref={svgRef}></svg>;
 };
 
 function App() {
-  const tree = createBTreeFromData(DATA_RECORDS);
+  const tree = createBTreeFromData(indexConfig);
 
   return (
     <div className="App">
