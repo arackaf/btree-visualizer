@@ -141,12 +141,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     const totalLeaves = Math.ceil(indexConfig.data.length / BTREE_CONFIG.maxKeysPerLeaf);
     const treeWidth = (totalLeaves - 1) * leafSpacing + nodeWidth;
     const padding = 200;
-    const width = treeWidth + padding * 2;
-    const heapHeight = 120;
-    const height = SHOW_HEAP ? 700 + heapHeight + 60 : 700; // Extra space for heap and arrows if enabled
-
-    svg.attr("width", width).attr("height", height);
-
     // Create hierarchy data for D3
     const createHierarchy = (node: BTreeNode, level: number = 0): any => {
       const hierarchyNode = {
@@ -157,7 +151,26 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       return hierarchyNode;
     };
 
+    // Calculate the actual tree depth
+    const calculateTreeDepth = (node: any): number => {
+      if (!node.children || node.children.length === 0) {
+        return 1; // Leaf level
+      }
+      return 1 + Math.max(...node.children.map((child: any) => calculateTreeDepth(child)));
+    };
+
     const hierarchyRoot = createHierarchy(tree);
+    const treeDepth = calculateTreeDepth(hierarchyRoot);
+
+    const width = treeWidth + padding * 2;
+    const heapHeight = 120;
+
+    // Calculate dynamic height based on tree depth
+    const baseTreeHeight = 80; // Top padding
+    const dynamicTreeHeight = baseTreeHeight + (treeDepth - 1) * levelHeight + nodeHeight + 40; // Bottom padding
+    const height = SHOW_HEAP ? dynamicTreeHeight + heapHeight + 60 : dynamicTreeHeight;
+
+    svg.attr("width", width).attr("height", height);
 
     // Calculate positions for nodes with tighter leaf spacing
     const positionNodes = (node: any, leftBound: number, rightBound: number, y: number): void => {
@@ -184,7 +197,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
         // Position all leaves with consistent spacing
         allLeaves.forEach((leaf: any, i: number) => {
           leaf.x = startX + i * leafSpacing;
-          leaf.y = y + levelHeight * (4 - 1); // All leaves go to the bottom level
+          leaf.y = y + levelHeight * (treeDepth - 1); // All leaves go to the bottom level (dynamically calculated)
         });
 
         // Now position internal nodes above their leaf ranges
