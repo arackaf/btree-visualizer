@@ -84,10 +84,13 @@ svg {
   stroke-width: 2;
 }
 
-.leaf-connections line {
-  stroke: #4caf50;
-  stroke-width: 2;
-  stroke-dasharray: 5, 5;
+.leaf-arrows line {
+  stroke: #333;
+  stroke-width: 1.5;
+}
+
+.leaf-arrows polygon {
+  fill: #333;
 }
 
 /* Responsive design */

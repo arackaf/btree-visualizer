@@ -256,26 +256,40 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       }
     });
 
-    // Draw leaf node connections (next pointers)
-    const leafConnections = svg.append("g").attr("class", "leaf-connections");
-    allNodes
-      .filter((node) => node.data.type === "leaf")
-      .forEach((node) => {
-        if (node.data.next) {
-          const nextNode = allNodes.find((n) => n.data === node.data.next);
-          if (nextNode) {
-            leafConnections
-              .append("line")
-              .attr("x1", node.x + nodeWidth / 2)
-              .attr("y1", node.y + nodeHeight + 10)
-              .attr("x2", nextNode.x - nodeWidth / 2)
-              .attr("y2", nextNode.y + nodeHeight + 10)
-              .attr("stroke", "#4CAF50")
-              .attr("stroke-width", 2)
-              .attr("stroke-dasharray", "5,5");
-          }
-        }
-      });
+    // Draw bidirectional arrows between leaf nodes
+    const leafArrows = svg.append("g").attr("class", "leaf-arrows");
+    const leafNodes = allNodes.filter((node) => node.data.type === "leaf");
+
+    for (let i = 0; i < leafNodes.length - 1; i++) {
+      const currentLeaf = leafNodes[i];
+      const nextLeaf = leafNodes[i + 1];
+
+      const arrowY = currentLeaf.y; // Exact vertical center of the leaf box
+      const startX = currentLeaf.x + nodeWidth / 2; // Right edge of current leaf
+      const endX = nextLeaf.x - nodeWidth / 2; // Left edge of next leaf
+
+      // Main line
+      leafArrows
+        .append("line")
+        .attr("x1", startX)
+        .attr("y1", arrowY)
+        .attr("x2", endX)
+        .attr("y2", arrowY)
+        .attr("stroke", "#333")
+        .attr("stroke-width", 1.5);
+
+      // Left arrow head (pointing left)
+      leafArrows
+        .append("polygon")
+        .attr("points", `${startX + 8},${arrowY - 4} ${startX},${arrowY} ${startX + 8},${arrowY + 4}`)
+        .attr("fill", "#333");
+
+      // Right arrow head (pointing right)
+      leafArrows
+        .append("polygon")
+        .attr("points", `${endX - 8},${arrowY - 4} ${endX},${arrowY} ${endX - 8},${arrowY + 4}`)
+        .attr("fill", "#333");
+    }
 
     // Draw nodes
     const nodes = svg.append("g").attr("class", "nodes");
