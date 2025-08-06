@@ -12,7 +12,7 @@ import { createBTreeFromData } from "./util/createBTree";
 
 const SHOW_HEAP = false;
 
-interface HeapVisualizationProps {
+type HeapVisualizationProps = {
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   x: number;
   y: number;
@@ -24,7 +24,7 @@ interface HeapVisualizationProps {
     data: BTreeNode;
   }>;
   nodeHeight: number;
-}
+};
 
 const HeapVisualization: React.FC<HeapVisualizationProps> = ({ svg, x, y, width, height, leafNodes, nodeHeight }) => {
   React.useEffect(() => {
@@ -50,20 +50,8 @@ const HeapVisualization: React.FC<HeapVisualizationProps> = ({ svg, x, y, width,
       .attr("stroke", "#999")
       .attr("stroke-width", 2);
 
-    // Add "Heap" label
-    heap
-      .append("text")
-      .attr("x", ovalCenterX)
-      .attr("y", ovalCenterY + 8) // Slight adjustment for better centering
-      .attr("text-anchor", "middle")
-      .attr("font-family", "Arial, sans-serif")
-      .attr("font-size", "24px")
-      .attr("font-weight", "bold")
-      .attr("fill", "#666")
-      .text("Heap");
-
     // Draw arrows from each leaf to random points in the heap
-    const heapArrows = svg.append("g").attr("class", "heap-arrows");
+    const heapArrows = heap.append("g").attr("class", "heap-arrows");
 
     leafNodes.forEach((leafNode) => {
       const numArrows = leafNode.data.type === "leaf" ? leafNode.data.records.length : 0;
@@ -104,6 +92,16 @@ const HeapVisualization: React.FC<HeapVisualizationProps> = ({ svg, x, y, width,
           .attr("fill", "#666");
       }
     });
+    // Add "Heap" label
+    heap
+      .append("text")
+      .attr("x", ovalCenterX)
+      .attr("y", ovalCenterY + 18) // Slight adjustment for better centering
+      .attr("text-anchor", "middle")
+      .attr("font-family", "Arial, sans-serif")
+      .attr("font-size", "72px")
+      .attr("font-weight", "bold")
+      .text("Heap");
   }, [svg, x, y, width, height, leafNodes, nodeHeight]);
 
   return null; // This component doesn't render JSX, it manipulates the SVG directly
