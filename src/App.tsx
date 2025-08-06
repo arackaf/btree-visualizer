@@ -13,7 +13,6 @@ import { createBTreeFromData } from "./util/createBTree";
 const SHOW_HEAP = true;
 
 type HeapVisualizationProps = {
-  svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   x: number;
   y: number;
   width: number;
@@ -26,32 +25,19 @@ type HeapVisualizationProps = {
   nodeHeight: number;
 };
 
-const HeapVisualization: React.FC<HeapVisualizationProps> = ({ svg, x, y, width, height, leafNodes, nodeHeight }) => {
-  React.useEffect(() => {
-    // Clear any existing heap visualization
-    svg.selectAll(".heap, .heap-arrows").remove();
+const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, width, height, leafNodes, nodeHeight }) => {
+  // Calculate oval dimensions and center
+  const ovalCenterX = x + width / 2;
+  const ovalCenterY = y + height / 2;
+  const ovalRadiusX = width / 2;
+  const ovalRadiusY = height / 2;
 
-    // Draw simple oval heap
-    const heap = svg.append("g").attr("class", "heap");
-
-    // Create oval shape
-    const ovalCenterX = x + width / 2;
-    const ovalCenterY = y + height / 2;
-    const ovalRadiusX = width / 2;
-    const ovalRadiusY = height / 2;
-
-    heap
-      .append("ellipse")
-      .attr("cx", ovalCenterX)
-      .attr("cy", ovalCenterY)
-      .attr("rx", ovalRadiusX)
-      .attr("ry", ovalRadiusY)
-      .attr("fill", "#f5f5f5")
-      .attr("stroke", "#999")
-      .attr("stroke-width", 2);
-
-    // Draw arrows from each leaf to random points in the heap
-    const heapArrows = heap.append("g").attr("class", "heap-arrows");
+  // Generate arrows data
+  const arrows = React.useMemo(() => {
+    const arrowsData: Array<{
+      path: string;
+      arrowHead: { x: number; y: number; angle: number };
+    }> = [];
 
     leafNodes.forEach((leafNode) => {
       const numArrows = leafNode.data.type === "leaf" ? leafNode.data.records.length : 0;
@@ -75,36 +61,48 @@ const HeapVisualization: React.FC<HeapVisualizationProps> = ({ svg, x, y, width,
         // Draw curved arrow path
         const arrowPath = `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
 
-        heapArrows.append("path").attr("d", arrowPath).attr("stroke", "#666").attr("stroke-width", 1.5).attr("fill", "none");
-
-        // Add arrowhead at end
+        // Calculate angle for arrowhead
         const angle = Math.atan2(endY - controlY, endX - controlX);
-        const arrowSize = 6;
 
-        heapArrows
-          .append("polygon")
-          .attr(
-            "points",
-            `${endX},${endY} 
-             ${endX - arrowSize * Math.cos(angle - Math.PI / 6)},${endY - arrowSize * Math.sin(angle - Math.PI / 6)} 
-             ${endX - arrowSize * Math.cos(angle + Math.PI / 6)},${endY - arrowSize * Math.sin(angle + Math.PI / 6)}`
-          )
-          .attr("fill", "#666");
+        arrowsData.push({
+          path: arrowPath,
+          arrowHead: { x: endX, y: endY, angle },
+        });
       }
     });
-    // Add "Heap" label
-    heap
-      .append("text")
-      .attr("x", ovalCenterX)
-      .attr("y", ovalCenterY + 18) // Slight adjustment for better centering
-      .attr("text-anchor", "middle")
-      .attr("font-family", "Arial, sans-serif")
-      .attr("font-size", "72px")
-      .attr("font-weight", "bold")
-      .text("Heap");
-  }, [svg, x, y, width, height, leafNodes, nodeHeight]);
 
-  return null; // This component doesn't render JSX, it manipulates the SVG directly
+    return arrowsData;
+  }, [leafNodes, nodeHeight, ovalCenterX, ovalCenterY, ovalRadiusX, ovalRadiusY]);
+
+  return (
+    <g className="heap">
+      <ellipse cx={ovalCenterX} cy={ovalCenterY} rx={ovalRadiusX} ry={ovalRadiusY} fill="#f5f5f5" stroke="#999" strokeWidth={2} />
+
+      <g className="heap-arrows">
+        {arrows.map((arrow, index) => (
+          <g key={index}>
+            {/* Arrow path */}
+            <path d={arrow.path} stroke="#666" strokeWidth={1.5} fill="none" />
+            {/* Arrowhead */}
+            <polygon
+              points={`${arrow.arrowHead.x},${arrow.arrowHead.y} 
+                       ${arrow.arrowHead.x - 6 * Math.cos(arrow.arrowHead.angle - Math.PI / 6)},${
+                arrow.arrowHead.y - 6 * Math.sin(arrow.arrowHead.angle - Math.PI / 6)
+              } 
+                       ${arrow.arrowHead.x - 6 * Math.cos(arrow.arrowHead.angle + Math.PI / 6)},${
+                arrow.arrowHead.y - 6 * Math.sin(arrow.arrowHead.angle + Math.PI / 6)
+              }`}
+              fill="#666"
+            />
+          </g>
+        ))}
+      </g>
+
+      <text x={ovalCenterX} y={ovalCenterY + 18} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="72px" fontWeight="bold">
+        Heap
+      </text>
+    </g>
+  );
 };
 
 interface TreeVisualizationProps {
@@ -113,7 +111,7 @@ interface TreeVisualizationProps {
 
 const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [heapProps, setHeapProps] = React.useState<HeapVisualizationProps | null>(null);
+  const [heapProps, setHeapProps] = React.useState<HeapVisualizationProps | null>();
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -380,7 +378,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
 
     // Set heap props for the HeapVisualization component
     setHeapProps({
-      svg,
       x: heapX,
       y: heapY,
       width: heapWidth,
@@ -392,8 +389,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
 
   return (
     <>
-      <svg ref={svgRef}></svg>
-      {SHOW_HEAP && heapProps ? <HeapVisualization {...heapProps} /> : null}
+      <svg ref={svgRef}>{SHOW_HEAP && heapProps ? <HeapVisualization {...heapProps} /> : null}</svg>
     </>
   );
 };
