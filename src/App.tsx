@@ -12,12 +12,110 @@ import { createBTreeFromData } from "./util/createBTree";
 
 const SHOW_HEAP = false;
 
+interface HeapVisualizationProps {
+  svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  leafNodes: Array<{
+    x: number;
+    y: number;
+    data: BTreeNode;
+  }>;
+  nodeHeight: number;
+}
+
+const HeapVisualization: React.FC<HeapVisualizationProps> = ({ svg, x, y, width, height, leafNodes, nodeHeight }) => {
+  React.useEffect(() => {
+    // Clear any existing heap visualization
+    svg.selectAll(".heap, .heap-arrows").remove();
+
+    // Draw simple oval heap
+    const heap = svg.append("g").attr("class", "heap");
+
+    // Create oval shape
+    const ovalCenterX = x + width / 2;
+    const ovalCenterY = y + height / 2;
+    const ovalRadiusX = width / 2;
+    const ovalRadiusY = height / 2;
+
+    heap
+      .append("ellipse")
+      .attr("cx", ovalCenterX)
+      .attr("cy", ovalCenterY)
+      .attr("rx", ovalRadiusX)
+      .attr("ry", ovalRadiusY)
+      .attr("fill", "#f5f5f5")
+      .attr("stroke", "#999")
+      .attr("stroke-width", 2);
+
+    // Add "Heap" label
+    heap
+      .append("text")
+      .attr("x", ovalCenterX)
+      .attr("y", ovalCenterY + 8) // Slight adjustment for better centering
+      .attr("text-anchor", "middle")
+      .attr("font-family", "Arial, sans-serif")
+      .attr("font-size", "24px")
+      .attr("font-weight", "bold")
+      .attr("fill", "#666")
+      .text("Heap");
+
+    // Draw arrows from each leaf to random points in the heap
+    const heapArrows = svg.append("g").attr("class", "heap-arrows");
+
+    leafNodes.forEach((leafNode) => {
+      const numArrows = leafNode.data.type === "leaf" ? leafNode.data.records.length : 0;
+
+      for (let i = 0; i < numArrows; i++) {
+        // Start point: bottom of leaf node
+        const startX = leafNode.x + (i - (numArrows - 1) / 2) * 15; // Spread arrows horizontally
+        const startY = leafNode.y + nodeHeight / 2;
+
+        // End point: random location inside the oval heap
+        // Generate random point within the ellipse bounds
+        const heapAngle = Math.random() * 2 * Math.PI;
+        const radiusScale = Math.sqrt(Math.random()) * 0.8; // Keep arrows well inside the oval
+        const endX = ovalCenterX + radiusScale * ovalRadiusX * Math.cos(heapAngle);
+        const endY = ovalCenterY + radiusScale * ovalRadiusY * Math.sin(heapAngle);
+
+        // Control point for curved arrow
+        const controlX = (startX + endX) / 2;
+        const controlY = startY + (endY - startY) * 0.7;
+
+        // Draw curved arrow path
+        const arrowPath = `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
+
+        heapArrows.append("path").attr("d", arrowPath).attr("stroke", "#666").attr("stroke-width", 1.5).attr("fill", "none");
+
+        // Add arrowhead at end
+        const angle = Math.atan2(endY - controlY, endX - controlX);
+        const arrowSize = 6;
+
+        heapArrows
+          .append("polygon")
+          .attr(
+            "points",
+            `${endX},${endY} 
+             ${endX - arrowSize * Math.cos(angle - Math.PI / 6)},${endY - arrowSize * Math.sin(angle - Math.PI / 6)} 
+             ${endX - arrowSize * Math.cos(angle + Math.PI / 6)},${endY - arrowSize * Math.sin(angle + Math.PI / 6)}`
+          )
+          .attr("fill", "#666");
+      }
+    });
+  }, [svg, x, y, width, height, leafNodes, nodeHeight]);
+
+  return null; // This component doesn't render JSX, it manipulates the SVG directly
+};
+
 interface TreeVisualizationProps {
   tree: BTreeNode;
 }
 
 const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [heapProps, setHeapProps] = React.useState<HeapVisualizationProps | null>(null);
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -273,9 +371,9 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       }
     });
 
-    // Conditionally draw heap visualization
+    // Conditionally set up heap visualization props
     if (SHOW_HEAP) {
-      // Draw heap below the tree, aligned with leaf nodes
+      // Calculate heap position and dimensions
       const heapY = height - heapHeight - 20;
       const leafNodesForAlignment = allNodes.filter((node) => node.data.type === "leaf");
       const leftmostLeaf = leafNodesForAlignment[0];
@@ -284,84 +382,27 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       const heapX = leftmostLeaf.x - nodeWidth / 2;
       const heapWidth = rightmostLeaf.x + nodeWidth / 2 - (leftmostLeaf.x - nodeWidth / 2);
 
-      // Draw simple oval heap
-      const heap = svg.append("g").attr("class", "heap");
-
-      // Create oval shape
-      const ovalCenterX = heapX + heapWidth / 2;
-      const ovalCenterY = heapY + heapHeight / 2;
-      const ovalRadiusX = heapWidth / 2;
-      const ovalRadiusY = heapHeight / 2;
-
-      heap
-        .append("ellipse")
-        .attr("cx", ovalCenterX)
-        .attr("cy", ovalCenterY)
-        .attr("rx", ovalRadiusX)
-        .attr("ry", ovalRadiusY)
-        .attr("fill", "#f5f5f5")
-        .attr("stroke", "#999")
-        .attr("stroke-width", 2);
-
-      // Add "Heap" label
-      heap
-        .append("text")
-        .attr("x", ovalCenterX)
-        .attr("y", ovalCenterY + 8) // Slight adjustment for better centering
-        .attr("text-anchor", "middle")
-        .attr("font-family", "Arial, sans-serif")
-        .attr("font-size", "24px")
-        .attr("font-weight", "bold")
-        .attr("fill", "#666")
-        .text("Heap");
-
-      // Draw arrows from each leaf to random points in the heap
-      const heapArrows = svg.append("g").attr("class", "heap-arrows");
-      const leafNodesForHeap = allNodes.filter((node) => node.data.type === "leaf");
-
-      leafNodesForHeap.forEach((leafNode) => {
-        const numArrows = leafNode.data.records.length;
-
-        for (let i = 0; i < numArrows; i++) {
-          // Start point: bottom of leaf node
-          const startX = leafNode.x + (i - (numArrows - 1) / 2) * 15; // Spread arrows horizontally
-          const startY = leafNode.y + nodeHeight / 2;
-
-          // End point: random location inside the oval heap
-          // Generate random point within the ellipse bounds
-          const heapAngle = Math.random() * 2 * Math.PI;
-          const radiusScale = Math.sqrt(Math.random()) * 0.8; // Keep arrows well inside the oval
-          const endX = ovalCenterX + radiusScale * ovalRadiusX * Math.cos(heapAngle);
-          const endY = ovalCenterY + radiusScale * ovalRadiusY * Math.sin(heapAngle);
-
-          // Control point for curved arrow
-          const controlX = (startX + endX) / 2;
-          const controlY = startY + (endY - startY) * 0.7;
-
-          // Draw curved arrow path
-          const arrowPath = `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
-
-          heapArrows.append("path").attr("d", arrowPath).attr("stroke", "#666").attr("stroke-width", 1.5).attr("fill", "none");
-
-          // Add arrowhead at end
-          const angle = Math.atan2(endY - controlY, endX - controlX);
-          const arrowSize = 6;
-
-          heapArrows
-            .append("polygon")
-            .attr(
-              "points",
-              `${endX},${endY} 
-               ${endX - arrowSize * Math.cos(angle - Math.PI / 6)},${endY - arrowSize * Math.sin(angle - Math.PI / 6)} 
-               ${endX - arrowSize * Math.cos(angle + Math.PI / 6)},${endY - arrowSize * Math.sin(angle + Math.PI / 6)}`
-            )
-            .attr("fill", "#666");
-        }
+      // Set heap props for the HeapVisualization component
+      setHeapProps({
+        svg,
+        x: heapX,
+        y: heapY,
+        width: heapWidth,
+        height: heapHeight,
+        leafNodes: leafNodesForAlignment,
+        nodeHeight,
       });
+    } else {
+      setHeapProps(null);
     }
   }, [tree]);
 
-  return <svg ref={svgRef}></svg>;
+  return (
+    <>
+      <svg ref={svgRef}></svg>
+      {heapProps && <HeapVisualization {...heapProps} />}
+    </>
+  );
 };
 
 function App() {
