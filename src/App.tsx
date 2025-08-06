@@ -168,43 +168,50 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
 
     const hierarchyRoot = createHierarchy(tree);
 
-    // Calculate the total width needed for each level
-    const calculateLevelWidths = (node: any): number => {
-      if (!node.children || node.children.length === 0) {
-        return 1; // Leaf node takes 1 unit of width
-      }
-
-      let totalWidth = 0;
-      node.children.forEach((child: any) => {
-        totalWidth += calculateLevelWidths(child);
-      });
-      return totalWidth;
-    };
-
-    // Calculate positions for nodes with proper spacing
+    // Calculate positions for nodes with tighter leaf spacing
     const positionNodes = (node: any, leftBound: number, rightBound: number, y: number): void => {
       const centerX = (leftBound + rightBound) / 2;
       node.x = centerX;
       node.y = y;
 
       if (node.children && node.children.length > 0) {
-        // Calculate the width each child should occupy
-        const childWidths = node.children.map((child: any) => calculateLevelWidths(child));
-        const totalChildWidth = childWidths.reduce((sum: number, width: number) => sum + width, 0);
+        // Special handling for leaf nodes - use much tighter spacing
+        const isLeafParent = node.children.every((child: any) => !child.children || child.children.length === 0);
 
-        // Distribute children across the available width
-        const availableWidth = rightBound - leftBound;
-        let currentX = leftBound;
+        if (isLeafParent) {
+          // For leaf nodes, use minimal spacing
+          const leafSpacing = 160; // Much smaller spacing between leaves
+          const totalLeafWidth = (node.children.length - 1) * leafSpacing;
+          const startX = centerX - totalLeafWidth / 2;
 
-        node.children.forEach((child: any, i: number) => {
-          const childProportion = childWidths[i] / totalChildWidth;
-          const childWidth = availableWidth * childProportion;
-          const childLeft = currentX;
-          const childRight = currentX + childWidth;
+          node.children.forEach((child: any, i: number) => {
+            const childX = startX + i * leafSpacing;
+            positionNodes(child, childX - 50, childX + 50, y + levelHeight);
+          });
+        } else {
+          // For internal nodes, calculate proportional spacing
+          const calculateSubtreeLeaves = (n: any): number => {
+            if (!n.children || n.children.length === 0) return 1;
+            return n.children.reduce((sum: number, child: any) => sum + calculateSubtreeLeaves(child), 0);
+          };
 
-          positionNodes(child, childLeft, childRight, y + levelHeight);
-          currentX = childRight;
-        });
+          const childLeafCounts = node.children.map((child: any) => calculateSubtreeLeaves(child));
+          const totalLeaves = childLeafCounts.reduce((sum: number, count: number) => sum + count, 0);
+
+          // Distribute based on leaf count but with some minimum spacing
+          const availableWidth = rightBound - leftBound;
+          let currentX = leftBound;
+
+          node.children.forEach((child: any, i: number) => {
+            const childProportion = childLeafCounts[i] / totalLeaves;
+            const childWidth = Math.max(200, availableWidth * childProportion); // Minimum width
+            const childLeft = currentX;
+            const childRight = currentX + childWidth;
+
+            positionNodes(child, childLeft, childRight, y + levelHeight);
+            currentX = childRight;
+          });
+        }
       }
     };
 
