@@ -307,37 +307,50 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
         .attr("stroke-width", 2)
         .attr("rx", 5);
 
-      // Node label
-      nodeGroup
-        .append("text")
-        .attr("x", nodeWidth / 2)
-        .attr("y", 20)
-        .attr("text-anchor", "middle")
-        .attr("font-family", "Arial, sans-serif")
-        .attr("font-size", "12px")
-        .attr("font-weight", "bold")
-        .text(node.data.type === "leaf" ? "LEAF" : "INTERNAL");
-
-      // Keys
-      nodeGroup
-        .append("text")
-        .attr("x", nodeWidth / 2)
-        .attr("y", 35)
-        .attr("text-anchor", "middle")
-        .attr("font-family", "Arial, sans-serif")
-        .attr("font-size", "11px")
-        .text(`Keys: [${node.data.keys.join(", ")}]`);
-
-      // Records for leaf nodes
       if (node.data.type === "leaf") {
+        // Leaf node label
         nodeGroup
           .append("text")
           .attr("x", nodeWidth / 2)
-          .attr("y", 50)
+          .attr("y", 15)
           .attr("text-anchor", "middle")
           .attr("font-family", "Arial, sans-serif")
-          .attr("font-size", "9px")
-          .text(`Records: ${node.data.records.length}`);
+          .attr("font-size", "10px")
+          .attr("font-weight", "bold")
+          .text("Leaf");
+
+        // Display tuples in leaf nodes
+        node.data.records.forEach((record: any, i: number) => {
+          nodeGroup
+            .append("text")
+            .attr("x", nodeWidth / 2)
+            .attr("y", 28 + i * 12)
+            .attr("text-anchor", "middle")
+            .attr("font-family", "Arial, sans-serif")
+            .attr("font-size", "9px")
+            .text(`[${record.id}, "${record.title}"]`);
+        });
+      } else {
+        // Internal node label
+        nodeGroup
+          .append("text")
+          .attr("x", nodeWidth / 2)
+          .attr("y", 20)
+          .attr("text-anchor", "middle")
+          .attr("font-family", "Arial, sans-serif")
+          .attr("font-size", "12px")
+          .attr("font-weight", "bold")
+          .text("Node");
+
+        // Keys for internal nodes
+        nodeGroup
+          .append("text")
+          .attr("x", nodeWidth / 2)
+          .attr("y", 35)
+          .attr("text-anchor", "middle")
+          .attr("font-family", "Arial, sans-serif")
+          .attr("font-size", "11px")
+          .text(`Keys: [${node.data.keys.join(", ")}]`);
       }
     });
   }, [tree]);
