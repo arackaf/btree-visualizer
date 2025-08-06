@@ -148,11 +148,11 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 1200;
-    const height = 600;
+    const width = 1600;
+    const height = 700;
     const nodeWidth = 120;
     const nodeHeight = 60;
-    const levelHeight = 120;
+    const levelHeight = 140;
 
     svg.attr("width", width).attr("height", height);
 
@@ -168,23 +168,49 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
 
     const hierarchyRoot = createHierarchy(tree);
 
-    // Calculate positions for nodes
-    const positionNodes = (node: any, x: number = width / 2, y: number = 50): void => {
-      node.x = x;
+    // Calculate the total width needed for each level
+    const calculateLevelWidths = (node: any): number => {
+      if (!node.children || node.children.length === 0) {
+        return 1; // Leaf node takes 1 unit of width
+      }
+
+      let totalWidth = 0;
+      node.children.forEach((child: any) => {
+        totalWidth += calculateLevelWidths(child);
+      });
+      return totalWidth;
+    };
+
+    // Calculate positions for nodes with proper spacing
+    const positionNodes = (node: any, leftBound: number, rightBound: number, y: number): void => {
+      const centerX = (leftBound + rightBound) / 2;
+      node.x = centerX;
       node.y = y;
 
       if (node.children && node.children.length > 0) {
-        const totalWidth = node.children.length * (nodeWidth + 40);
-        const startX = x - totalWidth / 2 + (nodeWidth + 40) / 2;
+        // Calculate the width each child should occupy
+        const childWidths = node.children.map((child: any) => calculateLevelWidths(child));
+        const totalChildWidth = childWidths.reduce((sum: number, width: number) => sum + width, 0);
+
+        // Distribute children across the available width
+        const availableWidth = rightBound - leftBound;
+        let currentX = leftBound;
 
         node.children.forEach((child: any, i: number) => {
-          const childX = startX + i * (nodeWidth + 40);
-          positionNodes(child, childX, y + levelHeight);
+          const childProportion = childWidths[i] / totalChildWidth;
+          const childWidth = availableWidth * childProportion;
+          const childLeft = currentX;
+          const childRight = currentX + childWidth;
+
+          positionNodes(child, childLeft, childRight, y + levelHeight);
+          currentX = childRight;
         });
       }
     };
 
-    positionNodes(hierarchyRoot);
+    // Start positioning from the full width
+    const padding = 100;
+    positionNodes(hierarchyRoot, padding, width - padding, 80);
 
     // Collect all nodes for rendering
     const allNodes: any[] = [];
