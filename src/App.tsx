@@ -10,7 +10,7 @@ import { indexConfig } from "./data/idIncludeTitle";
 import { BTREE_CONFIG } from "./util/btreeSettings";
 import { createBTreeFromData } from "./util/createBTree";
 
-const SHOW_HEAP = false;
+const SHOW_HEAP = true;
 
 type HeapVisualizationProps = {
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
