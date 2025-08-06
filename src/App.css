@@ -26,9 +26,20 @@ header p {
 
 main {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   flex-direction: column;
+  overflow-x: auto;
+  padding: 20px 10px;
+  width: 100%;
+}
+
+.svg-container {
+  width: 100%;
+  overflow-x: auto;
+  display: flex;
+  justify-content: flex-start;
+  padding: 20px 0;
 }
 
 svg {
@@ -36,6 +47,7 @@ svg {
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   border: 1px solid #e0e0e0;
+  flex-shrink: 0;
 }
 
 /* Tooltip styles for future enhancement */
@@ -79,31 +91,17 @@ svg {
 }
 
 /* Responsive design */
-@media (max-width: 1700px) {
+@media (max-width: 1400px) {
   svg {
-    transform: scale(0.9);
-    transform-origin: center top;
-  }
-}
-
-@media (max-width: 1500px) {
-  svg {
-    transform: scale(0.75);
-    transform-origin: center top;
+    transform: scale(0.8);
+    transform-origin: left top;
   }
 }
 
 @media (max-width: 1200px) {
   svg {
-    transform: scale(0.6);
-    transform-origin: center top;
-  }
-}
-
-@media (max-width: 1000px) {
-  svg {
-    transform: scale(0.5);
-    transform-origin: center top;
+    transform: scale(0.7);
+    transform-origin: left top;
   }
 
   header h1 {
@@ -115,10 +113,17 @@ svg {
   }
 }
 
+@media (max-width: 1000px) {
+  svg {
+    transform: scale(0.6);
+    transform-origin: left top;
+  }
+}
+
 @media (max-width: 768px) {
   svg {
-    transform: scale(0.4);
-    transform-origin: center top;
+    transform: scale(0.5);
+    transform-origin: left top;
   }
 
   header {
@@ -126,6 +131,6 @@ svg {
   }
 
   main {
-    padding: 10px;
+    padding: 10px 5px;
   }
 }

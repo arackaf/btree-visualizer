@@ -145,11 +145,17 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 1600;
-    const height = 700;
     const nodeWidth = 120;
     const nodeHeight = 60;
     const levelHeight = 140;
+    const leafSpacing = 160;
+
+    // Calculate required width based on actual data
+    const totalLeaves = Math.ceil(DATA_RECORDS.length / BTREE_CONFIG.maxKeysPerLeaf);
+    const treeWidth = (totalLeaves - 1) * leafSpacing + nodeWidth;
+    const padding = 200;
+    const width = treeWidth + padding * 2;
+    const height = 700;
 
     svg.attr("width", width).attr("height", height);
 
@@ -185,9 +191,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
         };
 
         const allLeaves = collectLeaves(node);
-        const leafSpacing = 160; // Consistent spacing for ALL leaves
         const totalWidth = (allLeaves.length - 1) * leafSpacing;
-        const startX = node.x - totalWidth / 2;
+        const startX = padding; // Start from left padding
 
         // Position all leaves with consistent spacing
         allLeaves.forEach((leaf: any, i: number) => {
@@ -204,8 +209,10 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
           const leftmostLeaf = leavesUnder[0];
           const rightmostLeaf = leavesUnder[leavesUnder.length - 1];
 
-          // Position this internal node centered over its leaves
-          n.x = (leftmostLeaf.x + rightmostLeaf.x) / 2;
+          // Position this internal node centered over its leaves, but ensure it doesn't go beyond left padding
+          const centeredX = (leftmostLeaf.x + rightmostLeaf.x) / 2;
+          const minX = padding + nodeWidth / 2; // Ensure node doesn't extend beyond left padding
+          n.x = Math.max(minX, centeredX);
           n.y = y + levelHeight * currentLevel;
 
           // Position child internal nodes
@@ -219,7 +226,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       }
     };
 
-    // Start positioning - let the algorithm determine its own width
+    // Start positioning - width is now calculated to fit perfectly
     positionNodes(hierarchyRoot, 0, width, 80);
 
     // Collect all nodes for rendering
@@ -333,8 +340,10 @@ function App() {
         <h1>B+ Tree Visualizer</h1>
         <p>Interactive visualization of a B+ tree with (id, title) records</p>
       </header>
-      <main style={{ padding: "20px" }}>
-        <TreeVisualization tree={tree} />
+      <main>
+        <div className="svg-container">
+          <TreeVisualization tree={tree} />
+        </div>
       </main>
     </div>
   );
