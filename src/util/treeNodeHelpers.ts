@@ -1,12 +1,21 @@
 import type { BTreeRootNodePositioned } from "../types";
 import { LEFT_SPACING, LEVEL_HEIGHT, NODE_WIDTH, PADDING } from "./constants";
 
-export const flattenNodes = (node: BTreeRootNodePositioned): BTreeRootNodePositioned[] => {
-  const result: BTreeRootNodePositioned[] = [];
-  result.push(node);
-  result.push(...node.children.flatMap(flattenNodes));
+export const flattenNodes = (
+  nodes: BTreeRootNodePositioned | BTreeRootNodePositioned[],
+  result?: BTreeRootNodePositioned[]
+): BTreeRootNodePositioned[] => {
+  if (!result) {
+    result = [];
+  }
+  if (!Array.isArray(nodes)) {
+    nodes = [nodes];
+  }
 
-  return result;
+  result.push(...nodes);
+  const nextBatch = nodes.flatMap((node) => node.children ?? []);
+
+  return nextBatch.length ? flattenNodes(nextBatch, result) : result;
 };
 
 // Calculate positions for nodes with tighter leaf spacing
