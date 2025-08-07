@@ -30,3 +30,31 @@ export type BTreeRootNodePositioned = {
   y: number;
   children: BTreeRootNodePositioned[];
 };
+
+export type VisualNode = {
+  id: string;
+  x: number;
+  y: number;
+  data: BTreeNode;
+};
+
+export type VisualLink = {
+  id: string;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+};
+
+export type LeafArrow = {
+  id: string;
+  startX: number;
+  endX: number;
+  y: number;
+};
+
+export type UiPayload = {
+  nodes: VisualNode[];
+  links: VisualLink[];
+  leafArrows: LeafArrow[];
+};

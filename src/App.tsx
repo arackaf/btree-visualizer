@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import "./App.css";
-import type { BTreeNode, BTreeRootNode, BTreeRootNodePositioned } from "./types";
+import type { BTreeNode, BTreeRootNodePositioned, LeafArrow, UiPayload, VisualLink, VisualNode } from "./types";
 
 // import { indexConfig } from "./data/idIncludeTitle";
 // import { indexConfig } from "./data/idTitle";
@@ -158,29 +158,6 @@ interface TreeVisualizationProps {
   tree: BTreeNode;
 }
 
-// Types for visualization data
-interface VisualNode {
-  id: string;
-  x: number;
-  y: number;
-  data: BTreeNode;
-}
-
-interface VisualLink {
-  id: string;
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-}
-
-interface LeafArrow {
-  id: string;
-  startX: number;
-  endX: number;
-  y: number;
-}
-
 // Create hierarchy data
 const createHierarchy = (node: BTreeNode): BTreeRootNodePositioned => {
   return {
@@ -221,12 +198,6 @@ const positionInternalNodes = (node: BTreeRootNodePositioned, currentLevel: numb
 };
 
 const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
-  const [nodes, setNodes] = React.useState<VisualNode[]>([]);
-  const [links, setLinks] = React.useState<VisualLink[]>([]);
-  const [leafArrows, setLeafArrows] = React.useState<LeafArrow[]>([]);
-  //const [heapProps, setHeapProps] = React.useState<HeapVisualizationProps | null>();
-
-  // Calculate required width based on actual data
   const totalLeaves = Math.ceil(indexConfig.data.length / BTREE_CONFIG.maxKeysPerLeaf);
   const treeWidth = (totalLeaves - 1) * LEFT_SPACING + NODE_WIDTH;
 
@@ -273,7 +244,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     };
   }, [height, leafNodes]);
 
-  useEffect(() => {
+  const uiPayload: UiPayload = useMemo(() => {
     // Create visual nodes with unique IDs
     const visualNodes: VisualNode[] = allNodes.map((node, index) => ({
       id: `node-${index}`,
@@ -314,24 +285,25 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       });
     }
 
-    // Set all the state
-    setNodes(visualNodes);
-    setLinks(visualLinks);
-    setLeafArrows(visualLeafArrows);
-  }, [tree, allNodes, leafNodes]);
+    return {
+      nodes: visualNodes,
+      links: visualLinks,
+      leafArrows: visualLeafArrows,
+    };
+  }, [allNodes]);
 
   return (
     <svg width={width} height={height}>
       {/* Links */}
       <g className="links">
-        {links.map((link) => (
+        {uiPayload.links.map((link) => (
           <line key={link.id} x1={link.x1} y1={link.y1} x2={link.x2} y2={link.y2} stroke="#666" strokeWidth={2} />
         ))}
       </g>
 
       {/* Leaf arrows */}
       <g className="leaf-arrows">
-        {leafArrows.map((arrow) => (
+        {uiPayload.leafArrows.map((arrow) => (
           <g key={arrow.id}>
             {/* Main line */}
             <line x1={arrow.startX} y1={arrow.y} x2={arrow.endX} y2={arrow.y} stroke="#333" strokeWidth={1.5} />
@@ -345,7 +317,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
 
       {/* Nodes */}
       <g className="nodes">
-        {nodes.map((node) => (
+        {uiPayload.nodes.map((node) => (
           <g key={node.id} transform={`translate(${node.x - NODE_WIDTH / 2}, ${node.y - NODE_HEIGHT / 2})`}>
             {/* Node rectangle */}
             <rect
