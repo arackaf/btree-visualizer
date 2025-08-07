@@ -16,6 +16,7 @@ const PADDING = 200;
 const NODE_WIDTH = 120;
 const NODE_HEIGHT = 60;
 const LEFT_SPACING = 160;
+const HEAP_HEIGHT = 120;
 
 type HeapVisualizationProps = {
   x: number;
@@ -232,12 +233,11 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
   const treeDepth = useMemo(() => calculateTreeDepth(hierarchyRoot), [hierarchyRoot]);
 
   const width = treeWidth + PADDING * 2;
-  const heapHeight = 120;
 
   const baseTreeHeight = 80; // Top padding
 
   const dynamicTreeHeight = baseTreeHeight + (treeDepth - 1) * LEVEL_HEIGHT + NODE_HEIGHT + 40; // Bottom padding
-  const height = SHOW_HEAP ? dynamicTreeHeight + heapHeight + 60 : dynamicTreeHeight;
+  const height = SHOW_HEAP ? dynamicTreeHeight + HEAP_HEIGHT + 60 : dynamicTreeHeight;
 
   useEffect(() => {
     // Start positioning - width is now calculated to fit perfectly
@@ -245,6 +245,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
 
     // Collect all nodes for rendering
     const allNodes = flattenNodes(hierarchyRoot);
+    const leafNodes = allNodes.filter((node) => node.data.type === "leaf");
 
     // Create visual nodes with unique IDs
     const visualNodes: VisualNode[] = allNodes.map((node, index) => ({
@@ -272,7 +273,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     });
 
     // Create leaf arrows
-    const leafNodes = allNodes.filter((node) => node.data.type === "leaf");
     const visualLeafArrows: LeafArrow[] = [];
 
     for (let i = 0; i < leafNodes.length - 1; i++) {
@@ -293,7 +293,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     setLeafArrows(visualLeafArrows);
 
     // Calculate heap position and dimensions
-    const heapY = height - heapHeight - 20;
+    const heapY = height - HEAP_HEIGHT - 20;
     const leafNodesForAlignment = leafNodes;
     const leftmostLeaf = leafNodesForAlignment[0];
     const rightmostLeaf = leafNodesForAlignment[leafNodesForAlignment.length - 1];
@@ -306,7 +306,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       x: heapX,
       y: heapY,
       width: heapWidth,
-      height: heapHeight,
+      height: HEAP_HEIGHT,
       leafNodes: leafNodesForAlignment.map((node) => ({
         x: node.x,
         y: node.y,
