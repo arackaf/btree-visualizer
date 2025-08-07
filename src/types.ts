@@ -63,7 +63,6 @@ export type HeapVisualizationProps = {
   x: number;
   y: number;
   width: number;
-  height: number;
   leafNodes: Array<{
     x: number;
     y: number;

@@ -14,7 +14,6 @@ export const calculateHeapProps = (height: number, leafNodes: BTreeRootNodePosit
     x: heapX,
     y: heapY,
     width: heapWidth,
-    height: HEAP_HEIGHT,
     leafNodes: leafNodesForAlignment.map((node) => ({
       x: node.x,
       y: node.y,
