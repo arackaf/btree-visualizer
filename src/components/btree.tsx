@@ -90,22 +90,17 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config }) => {
 
   return (
     <svg width={width} height={height}>
-      {/* Links */}
       <g className="links">
         {uiPayload.links.map((link) => (
           <line key={link.id} x1={link.x1} y1={link.y1} x2={link.x2} y2={link.y2} stroke="#666" strokeWidth={2} />
         ))}
       </g>
 
-      {/* Leaf arrows */}
       <g className="leaf-arrows">
         {uiPayload.leafArrows.map((arrow) => (
           <g key={arrow.id}>
-            {/* Main line */}
             <line x1={arrow.startX} y1={arrow.y} x2={arrow.endX} y2={arrow.y} stroke="#333" strokeWidth={1.5} />
-            {/* Left arrow head (pointing left) */}
             <polygon points={`${arrow.startX + 8},${arrow.y - 4} ${arrow.startX},${arrow.y} ${arrow.startX + 8},${arrow.y + 4}`} fill="#333" />
-            {/* Right arrow head (pointing right) */}
             <polygon points={`${arrow.endX - 8},${arrow.y - 4} ${arrow.endX},${arrow.y} ${arrow.endX - 8},${arrow.y + 4}`} fill="#333" />
           </g>
         ))}
