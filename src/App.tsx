@@ -17,6 +17,7 @@ const NODE_WIDTH = 120;
 const NODE_HEIGHT = 60;
 const LEFT_SPACING = 160;
 const HEAP_HEIGHT = 120;
+const BASE_TREE_HEIGHT = 80;
 
 type HeapVisualizationProps = {
   x: number;
@@ -229,24 +230,27 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
   const totalLeaves = Math.ceil(indexConfig.data.length / BTREE_CONFIG.maxKeysPerLeaf);
   const treeWidth = (totalLeaves - 1) * LEFT_SPACING + NODE_WIDTH;
 
-  const hierarchyRoot = useMemo(() => createHierarchy(tree), [tree]);
-  const treeDepth = useMemo(() => calculateTreeDepth(hierarchyRoot), [hierarchyRoot]);
-
   const width = treeWidth + PADDING * 2;
 
-  const baseTreeHeight = 80; // Top padding
+  const { hierarchyRoot, treeDepth } = useMemo(() => {
+    const result = createHierarchy(tree);
+    const treeDepth = calculateTreeDepth(result);
 
-  const dynamicTreeHeight = baseTreeHeight + (treeDepth - 1) * LEVEL_HEIGHT + NODE_HEIGHT + 40; // Bottom padding
+    positionNodes(result, treeDepth, 0, width, 80);
+
+    return { hierarchyRoot: result, treeDepth };
+  }, [tree, width]);
+
+  const dynamicTreeHeight = BASE_TREE_HEIGHT + (treeDepth - 1) * LEVEL_HEIGHT + NODE_HEIGHT + 40; // Bottom padding
   const height = SHOW_HEAP ? dynamicTreeHeight + HEAP_HEIGHT + 60 : dynamicTreeHeight;
 
-  useEffect(() => {
-    // Start positioning - width is now calculated to fit perfectly
-    positionNodes(hierarchyRoot, treeDepth, 0, width, 80);
-
-    // Collect all nodes for rendering
+  const { allNodes, leafNodes } = useMemo(() => {
     const allNodes = flattenNodes(hierarchyRoot);
     const leafNodes = allNodes.filter((node) => node.data.type === "leaf");
+    return { allNodes, leafNodes };
+  }, [hierarchyRoot]);
 
+  useEffect(() => {
     // Create visual nodes with unique IDs
     const visualNodes: VisualNode[] = allNodes.map((node, index) => ({
       id: `node-${index}`,
@@ -314,7 +318,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       })),
       nodeHeight: NODE_HEIGHT,
     });
-  }, [tree]);
+  }, [tree, allNodes, leafNodes]);
 
   return (
     <svg width={width} height={height}>
