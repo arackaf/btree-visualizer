@@ -14,7 +14,7 @@ function App() {
   const tree = useMemo(() => createBTreeFromData(indexConfig), [indexConfig]);
 
   const [highlightedNodes, setHighlightedNodes] = useState<number[]>([]);
-  const [showHeap] = useState<boolean>(true);
+  const [showHeap] = useState<boolean>(false);
 
   const highlightedNodesProgression: number[][] = [
     [], // Start with no highlights
