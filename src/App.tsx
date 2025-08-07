@@ -189,7 +189,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
       </g>
 
       {/* Heap visualization */}
-      {SHOW_HEAP && heapProps ? <HeapVisualization {...heapProps} /> : null}
+      {SHOW_HEAP ? <HeapVisualization {...heapProps} /> : null}
     </svg>
   );
 };
