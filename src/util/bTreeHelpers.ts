@@ -1,5 +1,5 @@
 import type { BTreeConfig, BTreeInternalNode, BTreeLeafNode, BTreeNode, BTreeRootNodePositioned } from "../types";
-import { BTREE_CONFIG } from "./bTreeSettingsXXX";
+import { BTREE_CONFIG } from "./coreBTreeSettings";
 import sortBy from "lodash.sortby";
 
 export const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {

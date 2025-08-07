@@ -7,7 +7,7 @@ import type { BTreeNode, HeapVisualizationProps, LeafArrow, UiPayload, VisualLin
 //import { indexConfig } from "./data/idTitleBackup";
 import { indexConfig } from "./data/idIncludeTitle";
 
-import { BTREE_CONFIG } from "./util/bTreeSettingsXXX";
+import { BTREE_CONFIG } from "./util/coreBTreeSettings";
 import { BASE_TREE_HEIGHT, HEAP_HEIGHT, LEFT_SPACING, LEVEL_HEIGHT, NODE_HEIGHT, NODE_WIDTH, PADDING, SHOW_HEAP } from "./util/constants";
 import { flattenNodes, positionNodes } from "./util/treeNodeHelpers";
 import { calculateTreeDepth, createBTreeFromData, createPositionedHierarchyTree } from "./util/bTreeHelpers";
