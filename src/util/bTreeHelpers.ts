@@ -1,5 +1,5 @@
-import type { BTreeConfig, BTreeInternalNode, BTreeLeafNode, BTreeNode } from "../types";
-import { BTREE_CONFIG } from "./btreeSettings";
+import type { BTreeConfig, BTreeInternalNode, BTreeLeafNode, BTreeNode, BTreeRootNodePositioned } from "../types";
+import { BTREE_CONFIG } from "./bTreeSettingsXXX";
 import sortBy from "lodash.sortby";
 
 export const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {
@@ -68,6 +68,15 @@ export const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {
   }
 
   return currentLevel[0];
+};
+
+export const createPositionedHierarchyTree = (node: BTreeNode): BTreeRootNodePositioned => {
+  return {
+    x: 0,
+    y: 0,
+    data: node,
+    children: node.type === "internal" ? node.children.map((child) => createPositionedHierarchyTree(child)) : [],
+  };
 };
 
 export const calculateTreeDepth = (node: any): number => {

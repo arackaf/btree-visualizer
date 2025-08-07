@@ -1,16 +1,16 @@
 import React, { useMemo } from "react";
 import "./App.css";
-import type { BTreeNode, BTreeRootNodePositioned, HeapVisualizationProps, LeafArrow, UiPayload, VisualLink, VisualNode } from "./types";
+import type { BTreeNode, HeapVisualizationProps, LeafArrow, UiPayload, VisualLink, VisualNode } from "./types";
 
 // import { indexConfig } from "./data/idIncludeTitle";
 // import { indexConfig } from "./data/idTitle";
 //import { indexConfig } from "./data/idTitleBackup";
 import { indexConfig } from "./data/idIncludeTitle";
 
-import { BTREE_CONFIG } from "./util/btreeSettings";
+import { BTREE_CONFIG } from "./util/bTreeSettingsXXX";
 import { BASE_TREE_HEIGHT, HEAP_HEIGHT, LEFT_SPACING, LEVEL_HEIGHT, NODE_HEIGHT, NODE_WIDTH, PADDING, SHOW_HEAP } from "./util/constants";
 import { flattenNodes, positionNodes } from "./util/treeNodeHelpers";
-import { calculateTreeDepth, createBTreeFromData } from "./util/bTreeHelpers";
+import { calculateTreeDepth, createBTreeFromData, createPositionedHierarchyTree } from "./util/bTreeHelpers";
 import { calculateHeapProps } from "./util/heapHelpers";
 
 const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, width, height, leafNodes, nodeHeight }) => {
@@ -93,18 +93,8 @@ const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, width, heig
   );
 };
 
-interface TreeVisualizationProps {
+type TreeVisualizationProps = {
   tree: BTreeNode;
-}
-
-// Create hierarchy data
-const createHierarchy = (node: BTreeNode): BTreeRootNodePositioned => {
-  return {
-    x: 0,
-    y: 0,
-    data: node,
-    children: node.type === "internal" ? node.children.map((child) => createHierarchy(child)) : [],
-  };
 };
 
 const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
@@ -114,7 +104,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
   const width = treeWidth + PADDING * 2;
 
   const { hierarchyRoot, treeDepth } = useMemo(() => {
-    const result = createHierarchy(tree);
+    const result = createPositionedHierarchyTree(tree);
     const treeDepth = calculateTreeDepth(result);
 
     positionNodes(result, treeDepth, 0, width, 80);
