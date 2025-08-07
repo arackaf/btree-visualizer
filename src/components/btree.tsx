@@ -118,7 +118,11 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config }) => {
               rx={5}
             />
 
-            {node.data.type === "leaf" ? <LeafNodeContents node={node.data} config={config} /> : <NonLeafNodeContents node={node.data} />}
+            {node.data.type === "leaf" ? (
+              <LeafNodeContents node={node.data} config={config} />
+            ) : (
+              <NonLeafNodeContents node={node.data} config={config} />
+            )}
           </g>
         ))}
       </g>

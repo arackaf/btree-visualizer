@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { NODE_WIDTH } from "../util/constants";
 import type { BTreeConfig, BTreeLeafNode } from "../types";
+import { quoteValue } from "../util/misc";
 
 export const LeafNodeContents: FC<{ node: BTreeLeafNode; config: BTreeConfig }> = ({ node, config }) => {
   return (
@@ -10,8 +11,8 @@ export const LeafNodeContents: FC<{ node: BTreeLeafNode; config: BTreeConfig }> 
       </text>
 
       {node.records.map((record: any, i: number) => {
-        const keyValues = config.keyColumns.map((col) => record[col]);
-        const includeValues = config.includeColumns.map((col) => `"${record[col]}"`);
+        const keyValues = config.keyColumns.map((col) => quoteValue(record[col]));
+        const includeValues = config.includeColumns.map((col) => quoteValue(record[col]));
         const allValues = [...keyValues, ...includeValues];
 
         return (

@@ -1,10 +1,22 @@
 import type { FC } from "react";
 import { NODE_WIDTH } from "../util/constants";
-import type { BTreeInternalNode } from "../types";
+import type { BTreeConfig, BTreeInternalNode } from "../types";
+import { quoteValue } from "../util/misc";
 
-export const NonLeafNodeContents: FC<{ node: BTreeInternalNode }> = ({ node }) => {
-  const hasMultipleKeys = node.keys.some((key: any) => Array.isArray(key) && key.length > 1);
-  const keysJoined = node.keys.map((key: any) => (Array.isArray(key) && key.length > 1 ? `[${key.join(", ")}]` : key)).join(", ");
+const displayKey = (key: any | any[]) => {
+  if (Array.isArray(key)) {
+    if (key.length > 1) {
+      return `[${key.map((k) => quoteValue(k)).join(", ")}]`;
+    }
+    return quoteValue(key[0]);
+  }
+  return key;
+};
+
+//(Array.isArray(key) ? `[${key.map((k) => (typeof k === "string" ? `"${k}"` : k)).join(", ")}]` : key);
+
+export const NonLeafNodeContents: FC<{ node: BTreeInternalNode; config: BTreeConfig }> = ({ node, config }) => {
+  const hasMultipleKeys = config.keyColumns.length > 1;
 
   return (
     <>
@@ -13,17 +25,14 @@ export const NonLeafNodeContents: FC<{ node: BTreeInternalNode }> = ({ node }) =
       </text>
 
       {hasMultipleKeys ? (
-        node.keys.map((key: any, i: number) => {
-          const keyText = Array.isArray(key) ? `[${key.map((k) => (typeof k === "string" ? `"${k}"` : k)).join(", ")}]` : key;
-          return (
-            <text key={i} x={NODE_WIDTH / 2} y={32 + i * 12} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="9px">
-              {keyText}
-            </text>
-          );
-        })
+        node.keys.map((key: any, i: number) => (
+          <text key={i} x={NODE_WIDTH / 2} y={32 + i * 12} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="9px">
+            {displayKey(key)}
+          </text>
+        ))
       ) : (
         <text x={NODE_WIDTH / 2} y={37} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="11px">
-          {`[${keysJoined}]`}
+          {displayKey(node.keys)}
         </text>
       )}
     </>
