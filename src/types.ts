@@ -24,7 +24,8 @@ export type BTreeRootNode = {
   children: BTreeRootNode[];
 };
 
-export type BTreeRootNodePositioned = BTreeRootNode & {
+export type BTreeRootNodePositioned = {
+  data: BTreeNode;
   x: number;
   y: number;
   children: BTreeRootNodePositioned[];

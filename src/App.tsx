@@ -30,12 +30,12 @@ type HeapVisualizationProps = {
 };
 
 // Universal approach: collect all leaf descendants and space them evenly
-const collectLeaves = (n: BTreeRootNode): BTreeRootNode[] => {
+const collectLeaves = (n: BTreeRootNodePositioned): BTreeRootNodePositioned[] => {
   if (!n.children || n.children.length === 0) {
     return [n];
   }
-  let leaves: BTreeRootNode[] = [];
-  n.children.forEach((child: BTreeRootNode) => {
+  let leaves: BTreeRootNodePositioned[] = [];
+  n.children.forEach((child: BTreeRootNodePositioned) => {
     leaves = leaves.concat(collectLeaves(child));
   });
   return leaves;
@@ -149,14 +149,13 @@ interface LeafArrow {
 }
 
 // Create hierarchy data
-const createHierarchy = (node: BTreeNode): BTreeRootNode => {
-  const hierarchyNode = {
+const createHierarchy = (node: BTreeNode): BTreeRootNodePositioned => {
+  return {
     x: 0,
     y: 0,
-    node,
+    data: node,
     children: node.type === "internal" ? node.children.map((child) => createHierarchy(child)) : [],
   };
-  return hierarchyNode;
 };
 
 // Calculate the actual tree depth
@@ -168,7 +167,7 @@ const calculateTreeDepth = (node: any): number => {
 };
 
 // Now position internal nodes above their leaf ranges
-const positionInternalNodes = (node: BTreeRootNode, currentLevel: number, initialYOffset: number): void => {
+const positionInternalNodes = (node: BTreeRootNodePositioned, currentLevel: number, initialYOffset: number): void => {
   if (!node.children || node.children.length === 0) return; // Skip leaves
 
   // Find the range of leaves under this node
@@ -209,21 +208,22 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
   const dynamicTreeHeight = baseTreeHeight + (treeDepth - 1) * LEVEL_HEIGHT + NODE_HEIGHT + 40; // Bottom padding
   const height = SHOW_HEAP ? dynamicTreeHeight + heapHeight + 60 : dynamicTreeHeight;
 
-  const createPositionedNodeHierarchy = (node: BTreeRootNode, x: number, y: number): BTreeRootNodePositioned => {
+  const createPositionedNodeHierarchy = (node: BTreeRootNode): BTreeRootNodePositioned => {
     return {
-      ...node,
-      x,
-      y,
+      data: node.node,
+      x: 0,
+      y: 0,
       children: node.children?.map((child) => createPositionedNodeHierarchy(child)) ?? [],
     };
   };
 
   useEffect(() => {
     // Calculate positions for nodes with tighter leaf spacing
-    const positionNodes = (node: BTreeRootNode, leftBound: number, rightBound: number, y: number): BTreeRootNodePositioned => {
+    const positionNodes = (node: BTreeRootNodePositioned, leftBound: number, rightBound: number, y: number): void => {
       const centerX = (leftBound + rightBound) / 2;
 
-      const result: BTreeRootNodePositioned = createPositionedNodeHierarchy(node, centerX, y);
+      node.x = centerX;
+      node.y = y;
 
       if (node.children && node.children.length > 0) {
         const allLeaves = collectLeaves(node);
@@ -238,16 +238,14 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
         // Position all internal nodes starting from level 0
         positionInternalNodes(node, 0, y);
       }
-
-      return result;
     };
 
     // Start positioning - width is now calculated to fit perfectly
     positionNodes(hierarchyRoot, 0, width, 80);
 
     // Collect all nodes for rendering
-    const allNodes: any[] = [];
-    const collectNodes = (node: any): void => {
+    const allNodes: BTreeRootNodePositioned[] = [];
+    const collectNodes = (node: BTreeRootNodePositioned): void => {
       allNodes.push(node);
       if (node.children) {
         node.children.forEach(collectNodes);
