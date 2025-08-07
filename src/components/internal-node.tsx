@@ -13,8 +13,6 @@ const displayKey = (key: any | any[]) => {
   return key;
 };
 
-//(Array.isArray(key) ? `[${key.map((k) => (typeof k === "string" ? `"${k}"` : k)).join(", ")}]` : key);
-
 export const NonLeafNodeContents: FC<{ node: BTreeInternalNode; config: BTreeConfig }> = ({ node, config }) => {
   const hasMultipleKeys = config.keyColumns.length > 1;
 

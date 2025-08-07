@@ -6,8 +6,7 @@ import { HeapVisualization } from "./heap";
 import { calculateTreeDepth, createPositionedHierarchyTree } from "../util/bTreeHelpers";
 import { flattenNodes, positionNodes } from "../util/treeNodeHelpers";
 import { calculateHeapProps } from "../util/heapHelpers";
-import { NonLeafNodeContents } from "./internal-node";
-import { LeafNodeContents } from "./leaf-node";
+import { Node } from "./node";
 
 type TreeVisualizationProps = {
   config: BTreeConfig;
@@ -108,22 +107,7 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config }) => {
 
       <g className="nodes">
         {uiPayload.nodes.map((node) => (
-          <g key={node.id} transform={`translate(${node.x - NODE_WIDTH / 2}, ${node.y - NODE_HEIGHT / 2})`}>
-            <rect
-              width={NODE_WIDTH}
-              height={NODE_HEIGHT}
-              fill={node.data.type === "leaf" ? "#E3F2FD" : "#FFF3E0"}
-              stroke={node.data.type === "leaf" ? "#2196F3" : "#FF9800"}
-              strokeWidth={2}
-              rx={5}
-            />
-
-            {node.data.type === "leaf" ? (
-              <LeafNodeContents node={node.data} config={config} />
-            ) : (
-              <NonLeafNodeContents node={node.data} config={config} />
-            )}
-          </g>
+          <Node node={node} config={config} />
         ))}
       </g>
 
