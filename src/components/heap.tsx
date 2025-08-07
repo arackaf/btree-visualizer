@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import type { HeapVisualizationProps } from "../types";
-import { HEAP_HEIGHT } from "../util/constants";
+import { HEAP_HEIGHT, NODE_HEIGHT } from "../util/constants";
 
-export const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, width, leafNodes, nodeHeight }) => {
+export const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, width, leafNodes }) => {
   // Calculate oval dimensions and center
   const ovalCenterX = x + width / 2;
   const ovalCenterY = y + HEAP_HEIGHT / 2;
@@ -22,7 +22,7 @@ export const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, widt
       for (let i = 0; i < numArrows; i++) {
         // Start point: bottom of leaf node
         const startX = leafNode.x + (i - (numArrows - 1) / 2) * 15; // Spread arrows horizontally
-        const startY = leafNode.y + nodeHeight / 2;
+        const startY = leafNode.y + NODE_HEIGHT / 2;
 
         // End point: random location inside the oval heap
         // Generate random point within the ellipse bounds
@@ -49,7 +49,7 @@ export const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, widt
     });
 
     return arrowsData;
-  }, [leafNodes, nodeHeight, ovalCenterX, ovalCenterY, ovalRadiusX, ovalRadiusY]);
+  }, [leafNodes, ovalCenterX, ovalCenterY, ovalRadiusX, ovalRadiusY]);
 
   return (
     <g className="heap">

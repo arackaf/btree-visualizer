@@ -1,5 +1,5 @@
 import type { BTreeRootNodePositioned, HeapVisualizationProps } from "../types";
-import { HEAP_HEIGHT, NODE_HEIGHT, NODE_WIDTH } from "./constants";
+import { HEAP_HEIGHT, NODE_WIDTH } from "./constants";
 
 export const calculateHeapProps = (height: number, leafNodes: BTreeRootNodePositioned[]): HeapVisualizationProps => {
   const heapY = height - HEAP_HEIGHT - 20;
@@ -19,6 +19,5 @@ export const calculateHeapProps = (height: number, leafNodes: BTreeRootNodePosit
       y: node.y,
       data: node.data,
     })),
-    nodeHeight: NODE_HEIGHT,
   };
 };

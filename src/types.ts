@@ -68,5 +68,4 @@ export type HeapVisualizationProps = {
     y: number;
     data: BTreeNode;
   }>;
-  nodeHeight: number;
 };
