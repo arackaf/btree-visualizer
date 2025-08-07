@@ -58,3 +58,16 @@ export type UiPayload = {
   links: VisualLink[];
   leafArrows: LeafArrow[];
 };
+
+export type HeapVisualizationProps = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  leafNodes: Array<{
+    x: number;
+    y: number;
+    data: BTreeNode;
+  }>;
+  nodeHeight: number;
+};

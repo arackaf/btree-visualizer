@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import "./App.css";
-import type { BTreeNode, BTreeRootNodePositioned, LeafArrow, UiPayload, VisualLink, VisualNode } from "./types";
+import type { BTreeNode, BTreeRootNodePositioned, HeapVisualizationProps, LeafArrow, UiPayload, VisualLink, VisualNode } from "./types";
 
 // import { indexConfig } from "./data/idIncludeTitle";
 // import { indexConfig } from "./data/idTitle";
@@ -11,19 +11,7 @@ import { BTREE_CONFIG } from "./util/btreeSettings";
 import { BASE_TREE_HEIGHT, HEAP_HEIGHT, LEFT_SPACING, LEVEL_HEIGHT, NODE_HEIGHT, NODE_WIDTH, PADDING, SHOW_HEAP } from "./util/constants";
 import { flattenNodes, positionNodes } from "./util/treeNodeHelpers";
 import { calculateTreeDepth, createBTreeFromData } from "./util/bTreeHelpers";
-
-type HeapVisualizationProps = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  leafNodes: Array<{
-    x: number;
-    y: number;
-    data: BTreeNode;
-  }>;
-  nodeHeight: number;
-};
+import { calculateHeapProps } from "./util/heapHelpers";
 
 const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, width, height, leafNodes, nodeHeight }) => {
   // Calculate oval dimensions and center
@@ -143,28 +131,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     return { allNodes, leafNodes };
   }, [hierarchyRoot]);
 
-  const heapProps: HeapVisualizationProps = useMemo(() => {
-    const heapY = height - HEAP_HEIGHT - 20;
-    const leafNodesForAlignment = leafNodes;
-    const leftmostLeaf = leafNodesForAlignment[0];
-    const rightmostLeaf = leafNodesForAlignment[leafNodesForAlignment.length - 1];
-
-    const heapX = leftmostLeaf.x - NODE_WIDTH / 2;
-    const heapWidth = rightmostLeaf.x + NODE_WIDTH / 2 - (leftmostLeaf.x - NODE_WIDTH / 2);
-
-    return {
-      x: heapX,
-      y: heapY,
-      width: heapWidth,
-      height: HEAP_HEIGHT,
-      leafNodes: leafNodesForAlignment.map((node) => ({
-        x: node.x,
-        y: node.y,
-        data: node.data,
-      })),
-      nodeHeight: NODE_HEIGHT,
-    };
-  }, [height, leafNodes]);
+  const heapProps: HeapVisualizationProps = useMemo(() => calculateHeapProps(height, leafNodes), [height, leafNodes]);
 
   const uiPayload: UiPayload = useMemo(() => {
     // Create visual nodes with unique IDs
