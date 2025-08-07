@@ -109,11 +109,9 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config }) => {
         ))}
       </g>
 
-      {/* Nodes */}
       <g className="nodes">
         {uiPayload.nodes.map((node) => (
           <g key={node.id} transform={`translate(${node.x - NODE_WIDTH / 2}, ${node.y - NODE_HEIGHT / 2})`}>
-            {/* Node rectangle */}
             <rect
               width={NODE_WIDTH}
               height={NODE_HEIGHT}
@@ -125,12 +123,10 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config }) => {
 
             {node.data.type === "leaf" ? (
               <>
-                {/* Leaf node label */}
                 <text x={NODE_WIDTH / 2} y={15} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="10px" fontWeight="bold">
                   Leaf
                 </text>
 
-                {/* Display tuples in leaf nodes */}
                 {node.data.records.map((record: any, i: number) => {
                   const keyValues = config.keyColumns.map((col) => record[col]);
                   const includeValues = config.includeColumns.map((col) => `"${record[col]}"`);
@@ -145,7 +141,6 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config }) => {
               </>
             ) : (
               <>
-                {/* Internal node label */}
                 <text x={NODE_WIDTH / 2} y={20} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="12px" fontWeight="bold">
                   Node
                 </text>
@@ -182,7 +177,6 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config }) => {
         ))}
       </g>
 
-      {/* Heap visualization */}
       {SHOW_HEAP ? <HeapVisualization {...heapProps} /> : null}
     </svg>
   );
