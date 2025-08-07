@@ -29,7 +29,7 @@ export const NonLeafNodeContents: FC<{ node: BTreeInternalNode; config: BTreeCon
         fontFamily="Arial, sans-serif"
         fontSize="12px"
         fontWeight="bold"
-        fill={isHighlighted ? "#1565C0" : "#333"}
+        fill={isHighlighted ? "#0D47A1" : "#333"}
       >
         Node
       </text>
@@ -43,13 +43,13 @@ export const NonLeafNodeContents: FC<{ node: BTreeInternalNode; config: BTreeCon
             textAnchor="middle"
             fontFamily="Arial, sans-serif"
             fontSize="9px"
-            fill={isHighlighted ? "#1565C0" : "#333"}
+            fill={isHighlighted ? "#0D47A1" : "#333"}
           >
             {displayKey(key)}
           </text>
         ))
       ) : (
-        <text x={NODE_WIDTH / 2} y={37} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="11px" fill={isHighlighted ? "#1565C0" : "#333"}>
+        <text x={NODE_WIDTH / 2} y={37} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="11px" fill={isHighlighted ? "#0D47A1" : "#333"}>
           {displayKey(node.keys)}
         </text>
       )}

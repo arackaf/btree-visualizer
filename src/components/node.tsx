@@ -10,16 +10,16 @@ export const Node: FC<{ node: VisualNode; config: BTreeConfig; isHighlighted: bo
 
   const fillColor = isHighlighted
     ? isLeaf
-      ? "#BBDEFB"
-      : "#FFE0B2" // Brighter colors for highlighted nodes
+      ? "#90CAF9"
+      : "#FFCC80" // Much brighter colors for highlighted nodes
     : isLeaf
     ? "#E3F2FD"
     : "#FFF3E0"; // Default colors
 
   const strokeColor = isHighlighted
     ? isLeaf
-      ? "#1976D2"
-      : "#F57C00" // Brighter stroke colors for highlighted nodes
+      ? "#0D47A1"
+      : "#E65100" // Much darker stroke colors for highlighted nodes
     : isLeaf
     ? "#2196F3"
     : "#FF9800"; // Default stroke colors
