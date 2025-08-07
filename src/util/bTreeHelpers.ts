@@ -69,3 +69,10 @@ export const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {
 
   return currentLevel[0];
 };
+
+export const calculateTreeDepth = (node: any): number => {
+  if (!node.children || node.children.length === 0) {
+    return 1; // Leaf
+  }
+  return 1 + Math.max(...node.children.map((child: any) => calculateTreeDepth(child)));
+};

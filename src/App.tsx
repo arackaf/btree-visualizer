@@ -8,9 +8,9 @@ import type { BTreeNode, BTreeRootNodePositioned, LeafArrow, UiPayload, VisualLi
 import { indexConfig } from "./data/idIncludeTitle";
 
 import { BTREE_CONFIG } from "./util/btreeSettings";
-import { createBTreeFromData } from "./util/createBTree";
 import { BASE_TREE_HEIGHT, HEAP_HEIGHT, LEFT_SPACING, LEVEL_HEIGHT, NODE_HEIGHT, NODE_WIDTH, PADDING, SHOW_HEAP } from "./util/constants";
 import { flattenNodes, positionNodes } from "./util/treeNodeHelpers";
+import { calculateTreeDepth, createBTreeFromData } from "./util/bTreeHelpers";
 
 type HeapVisualizationProps = {
   x: number;
@@ -117,14 +117,6 @@ const createHierarchy = (node: BTreeNode): BTreeRootNodePositioned => {
     data: node,
     children: node.type === "internal" ? node.children.map((child) => createHierarchy(child)) : [],
   };
-};
-
-// Calculate the actual tree depth
-const calculateTreeDepth = (node: any): number => {
-  if (!node.children || node.children.length === 0) {
-    return 1; // Leaf
-  }
-  return 1 + Math.max(...node.children.map((child: any) => calculateTreeDepth(child)));
 };
 
 const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
