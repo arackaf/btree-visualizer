@@ -14,6 +14,7 @@ function App() {
   const tree = useMemo(() => createBTreeFromData(indexConfig), [indexConfig]);
 
   const [highlightedNodes, setHighlightedNodes] = useState<number[]>([]);
+  const [showHeap] = useState<boolean>(true);
 
   const highlightedNodesProgression: number[][] = [
     [], // Start with no highlights
@@ -50,7 +51,7 @@ function App() {
       </header>
       <main>
         <div className="svg-container">
-          <BTree tree={tree} config={indexConfig} highlightedNodes={highlightedNodes} />
+          <BTree tree={tree} config={indexConfig} highlightedNodes={highlightedNodes} showHeap={showHeap} />
         </div>
       </main>
     </div>

@@ -1,4 +1,3 @@
-export const SHOW_HEAP = true;
 export const LEVEL_HEIGHT = 140;
 export const PADDING = 200;
 export const NODE_WIDTH = 120;

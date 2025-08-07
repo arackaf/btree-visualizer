@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { BTreeConfig, BTreeNode, HeapVisualizationProps, LeafArrow, UiPayload, VisualLink, VisualNode } from "../types";
-import { BASE_TREE_HEIGHT, HEAP_HEIGHT, LEFT_SPACING, LEVEL_HEIGHT, NODE_HEIGHT, NODE_WIDTH, PADDING, SHOW_HEAP } from "../util/constants";
+import { BASE_TREE_HEIGHT, HEAP_HEIGHT, LEFT_SPACING, LEVEL_HEIGHT, NODE_HEIGHT, NODE_WIDTH, PADDING } from "../util/constants";
 import { BTREE_CONFIG } from "../util/coreBTreeSettings";
 import { HeapVisualization } from "./heap";
 import { calculateTreeDepth, createPositionedHierarchyTree } from "../util/bTreeHelpers";
@@ -12,9 +12,10 @@ type TreeVisualizationProps = {
   config: BTreeConfig;
   tree: BTreeNode;
   highlightedNodes?: number[];
+  showHeap?: boolean;
 };
 
-export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highlightedNodes = [] }) => {
+export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highlightedNodes = [], showHeap = true }) => {
   const totalLeaves = Math.ceil(config.data.length / BTREE_CONFIG.maxKeysPerLeaf);
   const treeWidth = (totalLeaves - 1) * LEFT_SPACING + NODE_WIDTH;
 
@@ -30,7 +31,7 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highligh
   }, [tree, width]);
 
   const dynamicTreeHeight = BASE_TREE_HEIGHT + (treeDepth - 1) * LEVEL_HEIGHT + NODE_HEIGHT + 40; // Bottom padding
-  const height = SHOW_HEAP ? dynamicTreeHeight + HEAP_HEIGHT + 60 : dynamicTreeHeight;
+  const height = showHeap ? dynamicTreeHeight + HEAP_HEIGHT + 60 : dynamicTreeHeight;
 
   const { allNodes, leafNodes } = useMemo(() => {
     const allNodes = flattenNodes(hierarchyRoot);
@@ -112,7 +113,7 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highligh
         ))}
       </g>
 
-      {SHOW_HEAP ? <HeapVisualization {...heapProps} /> : null}
+      {showHeap ? <HeapVisualization {...heapProps} /> : null}
     </svg>
   );
 };
