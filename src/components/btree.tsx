@@ -11,9 +11,10 @@ import { Node } from "./node";
 type TreeVisualizationProps = {
   config: BTreeConfig;
   tree: BTreeNode;
+  highlightedNodes?: number[];
 };
 
-export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config }) => {
+export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highlightedNodes = [] }) => {
   const totalLeaves = Math.ceil(config.data.length / BTREE_CONFIG.maxKeysPerLeaf);
   const treeWidth = (totalLeaves - 1) * LEFT_SPACING + NODE_WIDTH;
 
@@ -106,8 +107,8 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config }) => {
       </g>
 
       <g className="nodes">
-        {uiPayload.nodes.map((node) => (
-          <Node node={node} config={config} />
+        {uiPayload.nodes.map((node, index) => (
+          <Node key={node.id} node={node} config={config} isHighlighted={highlightedNodes.includes(index)} />
         ))}
       </g>
 

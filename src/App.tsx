@@ -21,7 +21,7 @@ function App() {
       </header>
       <main>
         <div className="svg-container">
-          <BTree tree={tree} config={indexConfig} />
+          <BTree tree={tree} config={indexConfig} highlightedNodes={[1, 4, 13]} />
         </div>
       </main>
     </div>
