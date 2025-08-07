@@ -3,7 +3,8 @@ import "./App.css";
 
 // import { indexConfig } from "./data/idIncludeTitle";
 // import { indexConfig } from "./data/idOrg";
-import { indexConfig } from "./data/idTitle";
+import { indexConfig } from "./data/idOnly";
+// import { indexConfig } from "./data/idTitle";
 // import { indexConfig } from "./data/idTitleBackup";
 // import { indexConfig } from "./data/idIncludeTitle";
 import { createBTreeFromData } from "./util/bTreeHelpers";
