@@ -239,15 +239,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
   const dynamicTreeHeight = baseTreeHeight + (treeDepth - 1) * LEVEL_HEIGHT + NODE_HEIGHT + 40; // Bottom padding
   const height = SHOW_HEAP ? dynamicTreeHeight + heapHeight + 60 : dynamicTreeHeight;
 
-  const createPositionedNodeHierarchy = (node: BTreeRootNode): BTreeRootNodePositioned => {
-    return {
-      data: node.node,
-      x: 0,
-      y: 0,
-      children: node.children?.map((child) => createPositionedNodeHierarchy(child)) ?? [],
-    };
-  };
-
   useEffect(() => {
     // Start positioning - width is now calculated to fit perfectly
     positionNodes(hierarchyRoot, treeDepth, 0, width, 80);
