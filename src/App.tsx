@@ -30,6 +30,14 @@ type HeapVisualizationProps = {
   nodeHeight: number;
 };
 
+const flattenNodes = (node: BTreeRootNodePositioned): BTreeRootNodePositioned[] => {
+  const result: BTreeRootNodePositioned[] = [];
+  result.push(node);
+  result.push(...node.children.flatMap(flattenNodes));
+
+  return result;
+};
+
 // Calculate positions for nodes with tighter leaf spacing
 const positionNodes = (node: BTreeRootNodePositioned, treeDepth: number, leftBound: number, rightBound: number, y: number): void => {
   const centerX = (leftBound + rightBound) / 2;
@@ -245,14 +253,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     positionNodes(hierarchyRoot, treeDepth, 0, width, 80);
 
     // Collect all nodes for rendering
-    const allNodes: BTreeRootNodePositioned[] = [];
-    const collectNodes = (node: BTreeRootNodePositioned): void => {
-      allNodes.push(node);
-      if (node.children) {
-        node.children.forEach(collectNodes);
-      }
-    };
-    collectNodes(hierarchyRoot);
+    const allNodes = flattenNodes(hierarchyRoot);
 
     // Create visual nodes with unique IDs
     const visualNodes: VisualNode[] = allNodes.map((node, index) => ({
