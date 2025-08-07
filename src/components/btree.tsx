@@ -7,6 +7,7 @@ import { calculateTreeDepth, createPositionedHierarchyTree } from "../util/bTree
 import { flattenNodes, positionNodes } from "../util/treeNodeHelpers";
 import { calculateHeapProps } from "../util/heapHelpers";
 import { NonLeafNodeContents } from "./internal-node";
+import { LeafNodeContents } from "./leaf-node";
 
 type TreeVisualizationProps = {
   config: BTreeConfig;
@@ -122,27 +123,7 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config }) => {
               rx={5}
             />
 
-            {node.data.type === "leaf" ? (
-              <>
-                <text x={NODE_WIDTH / 2} y={15} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="10px" fontWeight="bold">
-                  Leaf
-                </text>
-
-                {node.data.records.map((record: any, i: number) => {
-                  const keyValues = config.keyColumns.map((col) => record[col]);
-                  const includeValues = config.includeColumns.map((col) => `"${record[col]}"`);
-                  const allValues = [...keyValues, ...includeValues];
-
-                  return (
-                    <text key={i} x={NODE_WIDTH / 2} y={28 + i * 12} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="9px">
-                      {`[${allValues.join(", ")}]`}
-                    </text>
-                  );
-                })}
-              </>
-            ) : (
-              <NonLeafNodeContents node={node} />
-            )}
+            {node.data.type === "leaf" ? <LeafNodeContents node={node.data} config={config} /> : <NonLeafNodeContents node={node.data} />}
           </g>
         ))}
       </g>
