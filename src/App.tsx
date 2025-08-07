@@ -224,7 +224,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
   const [nodes, setNodes] = React.useState<VisualNode[]>([]);
   const [links, setLinks] = React.useState<VisualLink[]>([]);
   const [leafArrows, setLeafArrows] = React.useState<LeafArrow[]>([]);
-  const [heapProps, setHeapProps] = React.useState<HeapVisualizationProps | null>();
+  //const [heapProps, setHeapProps] = React.useState<HeapVisualizationProps | null>();
 
   // Calculate required width based on actual data
   const totalLeaves = Math.ceil(indexConfig.data.length / BTREE_CONFIG.maxKeysPerLeaf);
@@ -249,6 +249,29 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     const leafNodes = allNodes.filter((node) => node.data.type === "leaf");
     return { allNodes, leafNodes };
   }, [hierarchyRoot]);
+
+  const heapProps: HeapVisualizationProps = useMemo(() => {
+    const heapY = height - HEAP_HEIGHT - 20;
+    const leafNodesForAlignment = leafNodes;
+    const leftmostLeaf = leafNodesForAlignment[0];
+    const rightmostLeaf = leafNodesForAlignment[leafNodesForAlignment.length - 1];
+
+    const heapX = leftmostLeaf.x - NODE_WIDTH / 2;
+    const heapWidth = rightmostLeaf.x + NODE_WIDTH / 2 - (leftmostLeaf.x - NODE_WIDTH / 2);
+
+    return {
+      x: heapX,
+      y: heapY,
+      width: heapWidth,
+      height: HEAP_HEIGHT,
+      leafNodes: leafNodesForAlignment.map((node) => ({
+        x: node.x,
+        y: node.y,
+        data: node.data,
+      })),
+      nodeHeight: NODE_HEIGHT,
+    };
+  }, [height, leafNodes]);
 
   useEffect(() => {
     // Create visual nodes with unique IDs
@@ -295,29 +318,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ tree }) => {
     setNodes(visualNodes);
     setLinks(visualLinks);
     setLeafArrows(visualLeafArrows);
-
-    // Calculate heap position and dimensions
-    const heapY = height - HEAP_HEIGHT - 20;
-    const leafNodesForAlignment = leafNodes;
-    const leftmostLeaf = leafNodesForAlignment[0];
-    const rightmostLeaf = leafNodesForAlignment[leafNodesForAlignment.length - 1];
-
-    const heapX = leftmostLeaf.x - NODE_WIDTH / 2;
-    const heapWidth = rightmostLeaf.x + NODE_WIDTH / 2 - (leftmostLeaf.x - NODE_WIDTH / 2);
-
-    // Set heap props for the HeapVisualization component
-    setHeapProps({
-      x: heapX,
-      y: heapY,
-      width: heapWidth,
-      height: HEAP_HEIGHT,
-      leafNodes: leafNodesForAlignment.map((node) => ({
-        x: node.x,
-        y: node.y,
-        data: node.data,
-      })),
-      nodeHeight: NODE_HEIGHT,
-    });
   }, [tree, allNodes, leafNodes]);
 
   return (
