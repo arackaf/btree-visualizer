@@ -29,6 +29,7 @@ export type BTreeRootNodePositioned = {
   x: number;
   y: number;
   children: BTreeRootNodePositioned[];
+  arrowAngles?: HeapArrowData[];
 };
 
 export type VisualNode = {
@@ -64,6 +65,11 @@ export type HighlightedItem = {
   value: number;
 };
 
+export type HeapArrowData = {
+  heapAngle: number;
+  radiusScale: number;
+};
+
 export type HeapVisualizationProps = {
   x: number;
   y: number;
@@ -72,6 +78,7 @@ export type HeapVisualizationProps = {
     x: number;
     y: number;
     data: BTreeNode;
+    arrowAngles?: HeapArrowData[];
   }>;
   highlightedItems?: HighlightedItem[];
 };

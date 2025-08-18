@@ -2,7 +2,13 @@ import { useMemo } from "react";
 import type { HeapVisualizationProps } from "../types";
 import { HEAP_HEIGHT, NODE_HEIGHT } from "../util/constants";
 
-export const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, width, leafNodes, highlightedItems = [] }) => {
+export const HeapVisualization: React.FC<HeapVisualizationProps> = ({
+  x,
+  y,
+  width,
+  leafNodes,
+  highlightedItems = [],
+}) => {
   // Calculate oval dimensions and center
   const ovalCenterX = x + width / 2;
   const ovalCenterY = y + HEAP_HEIGHT / 2;
@@ -16,18 +22,24 @@ export const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, widt
       arrowHead: { x: number; y: number; angle: number };
     }> = [];
 
-    leafNodes.forEach((leafNode) => {
+    leafNodes.forEach(leafNode => {
       const numArrows = leafNode.data.type === "leaf" ? leafNode.data.records.length : 0;
+      const arrowAngles = leafNode.arrowAngles || [];
 
       for (let i = 0; i < numArrows; i++) {
         // Start point: bottom of leaf node
         const startX = leafNode.x + (i - (numArrows - 1) / 2) * 15; // Spread arrows horizontally
         const startY = leafNode.y + NODE_HEIGHT / 2;
 
-        // End point: random location inside the oval heap
-        // Generate random point within the ellipse bounds
-        const heapAngle = Math.random() * 2 * Math.PI;
-        const radiusScale = Math.sqrt(Math.random()) * 0.8; // Keep arrows well inside the oval
+        // End point: use pre-computed stable angles for consistent positioning
+        const arrowData = arrowAngles[i];
+        if (!arrowData) {
+          // Fallback to deterministic positioning if arrow data is missing
+          console.warn("Missing arrow data for leaf node record", i);
+          continue;
+        }
+
+        const { heapAngle, radiusScale } = arrowData;
         const endX = ovalCenterX + radiusScale * ovalRadiusX * Math.cos(heapAngle);
         const endY = ovalCenterY + radiusScale * ovalRadiusY * Math.sin(heapAngle);
 
@@ -53,11 +65,19 @@ export const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, widt
 
   return (
     <g className="heap">
-      <ellipse cx={ovalCenterX} cy={ovalCenterY} rx={ovalRadiusX} ry={ovalRadiusY} fill="#f5f5f5" stroke="#999" strokeWidth={2} />
+      <ellipse
+        cx={ovalCenterX}
+        cy={ovalCenterY}
+        rx={ovalRadiusX}
+        ry={ovalRadiusY}
+        fill="#f5f5f5"
+        stroke="#999"
+        strokeWidth={2}
+      />
 
       <g className="heap-arrows">
         {arrows.map((arrow, index) => {
-          const isHighlighted = highlightedItems.some((item) => item.type === "HEAP_ARROW" && item.value === index);
+          const isHighlighted = highlightedItems.some(item => item.type === "HEAP_ARROW" && item.value === index);
           const arrowColor = isHighlighted ? "#ff0000" : "#666";
 
           return (
@@ -80,7 +100,14 @@ export const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, widt
         })}
       </g>
 
-      <text x={ovalCenterX} y={ovalCenterY + 18} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="72px" fontWeight="bold">
+      <text
+        x={ovalCenterX}
+        y={ovalCenterY + 18}
+        textAnchor="middle"
+        fontFamily="Arial, sans-serif"
+        fontSize="72px"
+        fontWeight="bold"
+      >
         Heap
       </text>
     </g>

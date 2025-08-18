@@ -1,4 +1,11 @@
-import type { BTreeConfig, BTreeInternalNode, BTreeLeafNode, BTreeNode, BTreeRootNodePositioned } from "../types";
+import type {
+  BTreeConfig,
+  BTreeInternalNode,
+  BTreeLeafNode,
+  BTreeNode,
+  BTreeRootNodePositioned,
+  HeapArrowData,
+} from "../types";
 import { BTREE_CONFIG } from "./coreBTreeSettings";
 import sortBy from "lodash.sortby";
 
@@ -13,7 +20,7 @@ export const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {
     const leafRecords = sortedRecords.slice(i, i + BTREE_CONFIG.maxKeysPerLeaf);
     const leaf: BTreeLeafNode = {
       type: "leaf",
-      keys: leafRecords.map((r) => indexConfig.keyColumns.map((col) => r[col])),
+      keys: leafRecords.map(r => indexConfig.keyColumns.map(col => r[col])),
       records: leafRecords,
     };
     leaves.push(leaf);
@@ -70,12 +77,32 @@ export const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {
   return currentLevel[0];
 };
 
+// Generate random arrow angles for leaf node records
+const generateRandomArrowAngles = (records: Record<string, any>[]): HeapArrowData[] => {
+  return records.map(() => {
+    const heapAngle = Math.random() * 2 * Math.PI;
+    const radiusScale = Math.sqrt(Math.random()) * 0.8; // Keep arrows well inside the oval
+
+    return { heapAngle, radiusScale };
+  });
+};
+
 export const createPositionedHierarchyTree = (node: BTreeNode): BTreeRootNodePositioned => {
+  if (node.type === "leaf") {
+    return {
+      x: 0,
+      y: 0,
+      data: node,
+      children: [],
+      arrowAngles: generateRandomArrowAngles(node.records),
+    };
+  }
+
   return {
     x: 0,
     y: 0,
     data: node,
-    children: node.type === "internal" ? node.children.map((child) => createPositionedHierarchyTree(child)) : [],
+    children: node.children.map(child => createPositionedHierarchyTree(child)),
   };
 };
 
