@@ -8,7 +8,7 @@ const displayKey = (key: any | any[]) => {
     if (key.length > 1) {
       return `[${key.map((k) => quoteValue(k)).join(", ")}]`;
     }
-    return quoteValue(key[0]);
+    return `[${quoteValue(key[0])}]`;
   }
   return key;
 };
