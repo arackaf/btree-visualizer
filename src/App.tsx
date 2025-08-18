@@ -44,7 +44,7 @@ function App() {
         // Stop at the final state
         clearInterval(interval);
       }
-    }, 1500);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, [isHighlightingActive]);
