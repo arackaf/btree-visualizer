@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { BTreeConfig, BTreeNode, HeapVisualizationProps, LeafArrow, UiPayload, VisualLink, VisualNode } from "../types";
+import type { BTreeConfig, BTreeNode, HeapVisualizationProps, HighlightedItem, LeafArrow, UiPayload, VisualLink, VisualNode } from "../types";
 import { BASE_TREE_HEIGHT, HEAP_HEIGHT, LEFT_SPACING, LEVEL_HEIGHT, NODE_HEIGHT, NODE_WIDTH, PADDING } from "../util/constants";
 import { BTREE_CONFIG } from "../util/coreBTreeSettings";
 import { HeapVisualization } from "./heap";
@@ -11,11 +11,11 @@ import { Node } from "./node";
 type TreeVisualizationProps = {
   config: BTreeConfig;
   tree: BTreeNode;
-  highlightedNodes?: number[];
+  highlightedItems?: HighlightedItem[];
   showHeap?: boolean;
 };
 
-export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highlightedNodes = [], showHeap = true }) => {
+export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highlightedItems = [], showHeap = true }) => {
   const totalLeaves = Math.ceil(config.data.length / BTREE_CONFIG.maxKeysPerLeaf);
   const treeWidth = (totalLeaves - 1) * LEFT_SPACING + NODE_WIDTH;
 
@@ -109,7 +109,12 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highligh
 
       <g className="nodes">
         {uiPayload.nodes.map((node, index) => (
-          <Node key={node.id} node={node} config={config} isHighlighted={highlightedNodes.includes(index)} />
+          <Node
+            key={node.id}
+            node={node}
+            config={config}
+            isHighlighted={highlightedItems.some((item) => item.type === "NODE" && item.value === index)}
+          />
         ))}
       </g>
 

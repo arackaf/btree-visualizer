@@ -9,37 +9,38 @@ import { indexConfig } from "./data/idOnly";
 // import { indexConfig } from "./data/idIncludeTitle";
 import { createBTreeFromData } from "./util/bTreeHelpers";
 import { BTree } from "./components/btree";
+import type { HighlightedItem } from "./types";
 
 function App() {
   const tree = useMemo(() => createBTreeFromData(indexConfig), [indexConfig]);
 
-  const [highlightedNodes, setHighlightedNodes] = useState<number[]>([]);
+  const [highlightedItems, setHighlightedItems] = useState<HighlightedItem[]>([]);
   const [showHeap] = useState<boolean>(false);
   const [isHighlightingActive, setIsHighlightingActive] = useState<boolean>(false);
 
-  const highlightedNodesProgression: number[][] = [
+  const highlightedItemsProgression: HighlightedItem[][] = [
     [], // Start with no highlights
-    [0], // Highlight root node
-    [1], // Add node 1
-    [4], // Add node 4
-    [13], // Add node 13
+    [{ type: "NODE", value: 0 }], // Highlight root node
+    [{ type: "NODE", value: 1 }], // Add node 1
+    [{ type: "NODE", value: 4 }], // Add node 4
+    [{ type: "NODE", value: 13 }], // Add node 13
   ];
 
   useEffect(() => {
     if (!isHighlightingActive) {
-      setHighlightedNodes([]);
+      setHighlightedItems([]);
       return;
     }
 
     let currentIndex = 0;
 
     // Set initial state
-    setHighlightedNodes(highlightedNodesProgression[0]);
+    setHighlightedItems(highlightedItemsProgression[0]);
 
     const interval = setInterval(() => {
       currentIndex++;
-      if (currentIndex < highlightedNodesProgression.length) {
-        setHighlightedNodes(highlightedNodesProgression[currentIndex]);
+      if (currentIndex < highlightedItemsProgression.length) {
+        setHighlightedItems(highlightedItemsProgression[currentIndex]);
       } else {
         // Stop at the final state
         clearInterval(interval);
@@ -60,7 +61,7 @@ function App() {
       </header>
       <main>
         <div className="svg-container">
-          <BTree tree={tree} config={indexConfig} highlightedNodes={highlightedNodes} showHeap={showHeap} />
+          <BTree tree={tree} config={indexConfig} highlightedItems={highlightedItems} showHeap={showHeap} />
         </div>
       </main>
     </div>

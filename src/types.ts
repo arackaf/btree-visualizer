@@ -59,6 +59,11 @@ export type UiPayload = {
   leafArrows: LeafArrow[];
 };
 
+export type HighlightedItem = {
+  type: "NODE";
+  value: number;
+};
+
 export type HeapVisualizationProps = {
   x: number;
   y: number;
