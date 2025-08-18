@@ -15,6 +15,7 @@ function App() {
 
   const [highlightedNodes, setHighlightedNodes] = useState<number[]>([]);
   const [showHeap] = useState<boolean>(false);
+  const [isHighlightingActive, setIsHighlightingActive] = useState<boolean>(false);
 
   const highlightedNodesProgression: number[][] = [
     [], // Start with no highlights
@@ -25,6 +26,11 @@ function App() {
   ];
 
   useEffect(() => {
+    if (!isHighlightingActive) {
+      setHighlightedNodes([]);
+      return;
+    }
+
     let currentIndex = 0;
 
     // Set initial state
@@ -41,10 +47,13 @@ function App() {
     }, 1500);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isHighlightingActive]);
 
   return (
     <div className="App">
+      <button style={{ position: "fixed", top: "5px", left: "5px" }} onClick={() => setIsHighlightingActive(!isHighlightingActive)}>
+        Toggle Highlighting
+      </button>
       <header style={{ padding: "20px", textAlign: "center" }}>
         <h1>B+ Tree Visualizer</h1>
         <p>Interactive visualization of a B+ tree with (id, title) records</p>
