@@ -39,7 +39,13 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highligh
     return { allNodes, leafNodes };
   }, [hierarchyRoot]);
 
-  const heapProps: HeapVisualizationProps = useMemo(() => calculateHeapProps(height, leafNodes), [height, leafNodes]);
+  const heapProps: HeapVisualizationProps = useMemo(
+    () => ({
+      ...calculateHeapProps(height, leafNodes),
+      highlightedItems,
+    }),
+    [height, leafNodes, highlightedItems]
+  );
 
   const uiPayload: UiPayload = useMemo(() => {
     // Create visual nodes with unique IDs

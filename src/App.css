@@ -105,12 +105,6 @@ svg {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.heap-arrows path {
-  stroke: #666;
-  stroke-width: 1.5;
-  fill: none;
-}
-
 .heap-arrows polygon {
   fill: #666;
 }

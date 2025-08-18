@@ -60,7 +60,7 @@ export type UiPayload = {
 };
 
 export type HighlightedItem = {
-  type: "NODE";
+  type: "NODE" | "HEAP_ARROW";
   value: number;
 };
 
@@ -73,4 +73,5 @@ export type HeapVisualizationProps = {
     y: number;
     data: BTreeNode;
   }>;
+  highlightedItems?: HighlightedItem[];
 };

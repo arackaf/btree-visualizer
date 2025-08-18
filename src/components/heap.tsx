@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { HeapVisualizationProps } from "../types";
 import { HEAP_HEIGHT, NODE_HEIGHT } from "../util/constants";
 
-export const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, width, leafNodes }) => {
+export const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, width, leafNodes, highlightedItems = [] }) => {
   // Calculate oval dimensions and center
   const ovalCenterX = x + width / 2;
   const ovalCenterY = y + HEAP_HEIGHT / 2;
@@ -56,23 +56,28 @@ export const HeapVisualization: React.FC<HeapVisualizationProps> = ({ x, y, widt
       <ellipse cx={ovalCenterX} cy={ovalCenterY} rx={ovalRadiusX} ry={ovalRadiusY} fill="#f5f5f5" stroke="#999" strokeWidth={2} />
 
       <g className="heap-arrows">
-        {arrows.map((arrow, index) => (
-          <g key={index}>
-            {/* Arrow path */}
-            <path d={arrow.path} stroke="#666" strokeWidth={1.5} fill="none" />
-            {/* Arrowhead */}
-            <polygon
-              points={`${arrow.arrowHead.x},${arrow.arrowHead.y} 
-                       ${arrow.arrowHead.x - 6 * Math.cos(arrow.arrowHead.angle - Math.PI / 6)},${
-                arrow.arrowHead.y - 6 * Math.sin(arrow.arrowHead.angle - Math.PI / 6)
-              } 
-                       ${arrow.arrowHead.x - 6 * Math.cos(arrow.arrowHead.angle + Math.PI / 6)},${
-                arrow.arrowHead.y - 6 * Math.sin(arrow.arrowHead.angle + Math.PI / 6)
-              }`}
-              fill="#666"
-            />
-          </g>
-        ))}
+        {arrows.map((arrow, index) => {
+          const isHighlighted = highlightedItems.some((item) => item.type === "HEAP_ARROW" && item.value === index);
+          const arrowColor = isHighlighted ? "#ff0000" : "#666";
+
+          return (
+            <g key={index}>
+              {/* Arrow path */}
+              <path d={arrow.path} stroke={arrowColor} strokeWidth={1.5} fill="none" />
+              {/* Arrowhead */}
+              <polygon
+                points={`${arrow.arrowHead.x},${arrow.arrowHead.y} 
+                         ${arrow.arrowHead.x - 6 * Math.cos(arrow.arrowHead.angle - Math.PI / 6)},${
+                  arrow.arrowHead.y - 6 * Math.sin(arrow.arrowHead.angle - Math.PI / 6)
+                } 
+                         ${arrow.arrowHead.x - 6 * Math.cos(arrow.arrowHead.angle + Math.PI / 6)},${
+                  arrow.arrowHead.y - 6 * Math.sin(arrow.arrowHead.angle + Math.PI / 6)
+                }`}
+                fill={arrowColor}
+              />
+            </g>
+          );
+        })}
       </g>
 
       <text x={ovalCenterX} y={ovalCenterY + 18} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="72px" fontWeight="bold">
