@@ -1,6 +1,23 @@
 import { useMemo } from "react";
-import type { BTreeConfig, BTreeNode, HeapVisualizationProps, HighlightedItem, LeafArrow, UiPayload, VisualLink, VisualNode } from "../types";
-import { BASE_TREE_HEIGHT, HEAP_HEIGHT, LEFT_SPACING, LEVEL_HEIGHT, NODE_HEIGHT, NODE_WIDTH, PADDING } from "../util/constants";
+import type {
+  BTreeConfig,
+  BTreeNode,
+  HeapVisualizationProps,
+  HighlightedItem,
+  LeafArrow,
+  UiPayload,
+  VisualLink,
+  VisualNode,
+} from "../types";
+import {
+  BASE_TREE_HEIGHT,
+  HEAP_HEIGHT,
+  LEFT_SPACING,
+  LEVEL_HEIGHT,
+  NODE_HEIGHT,
+  NODE_WIDTH,
+  PADDING,
+} from "../util/constants";
 import { BTREE_CONFIG } from "../util/coreBTreeSettings";
 import { HeapVisualization } from "./heap";
 import { calculateTreeDepth, createPositionedHierarchyTree } from "../util/bTreeHelpers";
@@ -31,11 +48,11 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highligh
   }, [tree, width]);
 
   const dynamicTreeHeight = BASE_TREE_HEIGHT + (treeDepth - 1) * LEVEL_HEIGHT + NODE_HEIGHT + 40; // Bottom padding
-  const height = showHeap ? dynamicTreeHeight + HEAP_HEIGHT + 60 : dynamicTreeHeight;
+  const height = dynamicTreeHeight + HEAP_HEIGHT + 60; // Always reserve space for heap
 
   const { allNodes, leafNodes } = useMemo(() => {
     const allNodes = flattenNodes(hierarchyRoot);
-    const leafNodes = allNodes.filter((node) => node.data.type === "leaf");
+    const leafNodes = allNodes.filter(node => node.data.type === "leaf");
     return { allNodes, leafNodes };
   }, [hierarchyRoot]);
 
@@ -59,7 +76,7 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highligh
     // Create visual links
     const visualLinks: VisualLink[] = [];
     let linkId = 0;
-    allNodes.forEach((node) => {
+    allNodes.forEach(node => {
       if (node.children) {
         node.children.forEach((child: any) => {
           visualLinks.push({
@@ -98,17 +115,25 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highligh
   return (
     <svg width={width} height={height}>
       <g className="links">
-        {uiPayload.links.map((link) => (
+        {uiPayload.links.map(link => (
           <line key={link.id} x1={link.x1} y1={link.y1} x2={link.x2} y2={link.y2} stroke="#666" strokeWidth={2} />
         ))}
       </g>
 
       <g className="leaf-arrows">
-        {uiPayload.leafArrows.map((arrow) => (
+        {uiPayload.leafArrows.map(arrow => (
           <g key={arrow.id}>
             <line x1={arrow.startX} y1={arrow.y} x2={arrow.endX} y2={arrow.y} stroke="#333" strokeWidth={1.5} />
-            <polygon points={`${arrow.startX + 8},${arrow.y - 4} ${arrow.startX},${arrow.y} ${arrow.startX + 8},${arrow.y + 4}`} fill="#333" />
-            <polygon points={`${arrow.endX - 8},${arrow.y - 4} ${arrow.endX},${arrow.y} ${arrow.endX - 8},${arrow.y + 4}`} fill="#333" />
+            <polygon
+              points={`${arrow.startX + 8},${arrow.y - 4} ${arrow.startX},${arrow.y} ${arrow.startX + 8},${
+                arrow.y + 4
+              }`}
+              fill="#333"
+            />
+            <polygon
+              points={`${arrow.endX - 8},${arrow.y - 4} ${arrow.endX},${arrow.y} ${arrow.endX - 8},${arrow.y + 4}`}
+              fill="#333"
+            />
           </g>
         ))}
       </g>
@@ -119,7 +144,7 @@ export const BTree: React.FC<TreeVisualizationProps> = ({ tree, config, highligh
             key={node.id}
             node={node}
             config={config}
-            isHighlighted={highlightedItems.some((item) => item.type === "NODE" && item.value === index)}
+            isHighlighted={highlightedItems.some(item => item.type === "NODE" && item.value === index)}
           />
         ))}
       </g>
