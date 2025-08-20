@@ -9,6 +9,16 @@ import type {
 import { BTREE_CONFIG } from "./coreBTreeSettings";
 import sortBy from "lodash.sortby";
 
+// Helper function to find the minimum key in a subtree
+const getMinimumKeyInSubtree = (node: BTreeNode): any[] => {
+  if (node.type === "leaf") {
+    return node.keys[0];
+  } else {
+    // For internal nodes, recurse to the leftmost child
+    return getMinimumKeyInSubtree(node.children[0]);
+  }
+};
+
 export const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {
   // Sort records by all key columns in order
 
@@ -43,23 +53,15 @@ export const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {
       // Create keys for internal node (first key of each child except the first)
       const keys: any[] = [];
       for (let j = 1; j < children.length; j++) {
-        if (children[j].type === "leaf") {
-          keys.push(children[j].keys[0]);
-        } else {
-          // For internal nodes, use the first key
-          keys.push(children[j].keys[0]);
-        }
+        // For both leaf and internal nodes, find the minimum key in the subtree
+        keys.push(getMinimumKeyInSubtree(children[j]));
       }
 
       // If we have only one child, this internal node shouldn't exist
       // But if it does (due to tree structure), we need at least one key for display
       if (keys.length === 0 && children.length === 1) {
-        // Use the first key from the single child as a representative key
-        if (children[0].type === "leaf") {
-          keys.push(children[0].keys[0]);
-        } else {
-          keys.push(children[0].keys[0] || []);
-        }
+        // Use the minimum key from the single child's subtree as a representative key
+        keys.push(getMinimumKeyInSubtree(children[0]));
       }
 
       const internalNode: BTreeInternalNode = {
