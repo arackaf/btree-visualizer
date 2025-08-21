@@ -1,8 +1,8 @@
 import type { BTreeConfig } from "../types";
 
 export const indexConfig: BTreeConfig = {
-  keyColumns: ["pages"],
-  includeColumns: ["title"],
+  keyColumns: ["pages", "title"],
+  includeColumns: [],
   data: [
     { pages: 100, title: "The Great Gatsby" },
     { pages: 150, title: "Of Mice and Men" },
