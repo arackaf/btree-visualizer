@@ -25,5 +25,5 @@ export const indexConfig: BTreeConfig = {
     { pages: 342, title: "The Scarlet Letter" },
     { pages: 478, title: "Moby Dick" },
     { pages: 521, title: "Great Expectations" },
-  ].map(item => ({ ...item, title: item.title.length > 10 ? item.title.slice(0, 15) + "..." : item.title })),
+  ].map(item => ({ ...item, title: item.title.length > 10 ? item.title.slice(0, 13) + "..." : item.title })),
 };
