@@ -26,6 +26,7 @@ export const NonLeafNodeContents: FC<{ node: BTreeInternalNode; config: BTreeCon
   isHighlighted,
 }) => {
   const hasMultipleKeys = config.keyColumns.length > 1;
+  const hasSingleStringKey = config.keyColumns.length === 1 && hasStringKeys(node.keys);
 
   return (
     <>
@@ -41,7 +42,7 @@ export const NonLeafNodeContents: FC<{ node: BTreeInternalNode; config: BTreeCon
         Node
       </text>
 
-      {hasMultipleKeys ? (
+      {hasMultipleKeys || hasSingleStringKey ? (
         node.keys.map((key: any, i: number) => {
           const isLeftAligned = hasStringKeys(key);
           return (
