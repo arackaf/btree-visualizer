@@ -24,10 +24,42 @@ export const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {
 
   const sortedRecords = sortBy([...indexConfig.data], indexConfig.keyColumns);
 
-  // Create leaf nodes
+  // Create leaf nodes - ensure records with identical keys stay together
   const leaves: BTreeLeafNode[] = [];
-  for (let i = 0; i < sortedRecords.length; i += BTREE_CONFIG.maxKeysPerLeaf) {
-    const leafRecords = sortedRecords.slice(i, i + BTREE_CONFIG.maxKeysPerLeaf);
+  let i = 0;
+  while (i < sortedRecords.length) {
+    const leafRecords: any[] = [];
+
+    while (i < sortedRecords.length && leafRecords.length < BTREE_CONFIG.maxKeysPerLeaf) {
+      const currentRecord = sortedRecords[i];
+      const currentKey = indexConfig.keyColumns.map(col => currentRecord[col]);
+
+      // Look ahead to see if adding this key would require splitting duplicates
+      let duplicateCount = 1;
+      let j = i + 1;
+      while (j < sortedRecords.length) {
+        const nextRecord = sortedRecords[j];
+        const nextKey = indexConfig.keyColumns.map(col => nextRecord[col]);
+        const keysEqual = currentKey.length === nextKey.length && currentKey.every((val, idx) => val === nextKey[idx]);
+
+        if (!keysEqual) break;
+        duplicateCount++;
+        j++;
+      }
+
+      // If adding all duplicates would exceed capacity, and we already have records,
+      // don't add any of them to this leaf (save them for the next leaf)
+      if (leafRecords.length > 0 && leafRecords.length + duplicateCount > BTREE_CONFIG.maxKeysPerLeaf) {
+        break;
+      }
+
+      // Add all records with this key to the current leaf
+      for (let k = 0; k < duplicateCount; k++) {
+        leafRecords.push(sortedRecords[i + k]);
+      }
+      i += duplicateCount;
+    }
+
     const leaf: BTreeLeafNode = {
       type: "leaf",
       keys: leafRecords.map(r => indexConfig.keyColumns.map(col => r[col])),
@@ -50,11 +82,15 @@ export const createBTreeFromData = (indexConfig: BTreeConfig): BTreeNode => {
     for (let i = 0; i < currentLevel.length; i += BTREE_CONFIG.maxKeysPerInternal + 1) {
       const children = currentLevel.slice(i, i + BTREE_CONFIG.maxKeysPerInternal + 1);
 
-      // Create keys for internal node (first key of each child except the first)
+      // Create keys for internal node with proper B-tree separator semantics
       const keys: any[] = [];
       for (let j = 1; j < children.length; j++) {
-        // For both leaf and internal nodes, find the minimum key in the subtree
-        keys.push(getMinimumKeyInSubtree(children[j]));
+        const rightChild = children[j];
+
+        // Use minimum key from right subtree as separator
+        // This maintains B-tree invariant: left < separator <= right
+        const separator = getMinimumKeyInSubtree(rightChild);
+        keys.push(separator);
       }
 
       // If we have only one child, this internal node shouldn't exist
