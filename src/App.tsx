@@ -3,7 +3,11 @@ import "./App.css";
 
 // import { indexConfig } from "./data/idIncludeTitle";
 // import { indexConfig } from "./data/idOrg";
-import { indexConfig } from "./data/idOnly";
+// import { indexConfig } from "./data/pages";
+import { indexConfig } from "./data/publisher-title";
+// import { indexConfig } from "./data/publisher";
+// import { indexConfig } from "./data/title.ts";
+// import { indexConfig } from "./data/pages-inc-title.ts";
 // import { indexConfig } from "./data/idTitle";
 // import { indexConfig } from "./data/idTitleBackup";
 // import { indexConfig } from "./data/idIncludeTitle";
@@ -20,22 +24,47 @@ function App() {
 
   const highlightedItemsProgression: HighlightedItem[][] = [
     [], // Start with no highlights
-    [{ type: "NODE", value: 0 }], // Highlight root node
-    [{ type: "NODE", value: 1 }], // Add node 1
-    [{ type: "NODE", value: 4 }], // Add node 4
-    [{ type: "NODE", value: 13 }], // Add node 13
-    [{ type: "HEAP_ARROW", value: 0 }], // Highlight first heap arrow
-    [{ type: "HEAP_ARROW", value: 2 }], // Highlight third heap arrow
     [
-      { type: "HEAP_ARROW", value: 0 },
-      { type: "HEAP_ARROW", value: 1 },
-      { type: "HEAP_ARROW", value: 2 },
-      { type: "HEAP_ARROW", value: 3 },
-      { type: "HEAP_ARROW", value: 4 },
-      { type: "HEAP_ARROW", value: 5 },
-      { type: "HEAP_ARROW", value: 6 },
-      { type: "HEAP_ARROW", value: 7 },
-    ], // Multiple heap arrows
+      { type: "NODE", value: 0 },
+      { type: "NODE", value: 1 },
+      { type: "NODE", value: 2 },
+      { type: "NODE", value: 4 },
+      { type: "NODE", value: 7 },
+    ], // Highlight root node
+    // [{ type: "NODE", value: 2 }], // Add node 1
+    // [{ type: "NODE", value: 9 }], // Add node 4
+    // [
+    //   { type: "NODE", value: 9 },
+    //   { type: "HEAP_ARROW", value: 16 },
+    // ], // Add node 4
+    // [
+    //   { type: "NODE", value: 9 },
+    //   { type: "NODE", value: 10 },
+    // ], // Add node 4
+    // [
+    //   { type: "NODE", value: 9 },
+    //   { type: "NODE", value: 10 },
+    //   { type: "NODE", value: 11 },
+    // ], // Add node 4
+    // [
+    //   { type: "NODE", value: 9 },
+    //   { type: "NODE", value: 10 },
+    //   { type: "NODE", value: 11 },
+    //   { type: "NODE", value: 12 },
+    // ], // Add node 4
+    //[{ type: "NODE", value: 13 }], // Add node 13
+    // [{ type: "HEAP_ARROW", value: 0 }], // Highlight first heap arrow
+    // [{ type: "HEAP_ARROW", value: 2 }], // Highlight third heap arrow
+    // [
+    //   { type: "HEAP_ARROW", value: 0 },
+    //   { type: "HEAP_ARROW", value: 1 },
+    //   { type: "HEAP_ARROW", value: 2 },
+    //   { type: "HEAP_ARROW", value: 3 },
+    //   { type: "HEAP_ARROW", value: 4 },
+    //   { type: "HEAP_ARROW", value: 5 },
+    //   { type: "HEAP_ARROW", value: 6 },
+    //   { type: "HEAP_ARROW", value: 7 },
+    //], // Multiple heap arrows
   ];
 
   useEffect(() => {
